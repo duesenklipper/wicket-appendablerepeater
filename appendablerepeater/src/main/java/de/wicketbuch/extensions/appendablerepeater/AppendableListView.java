@@ -3,12 +3,18 @@ package de.wicketbuch.extensions.appendablerepeater;
 import java.util.List;
 
 import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.markup.head.HeaderItem;
+import org.apache.wicket.markup.head.JavaScriptHeaderItem;
 import org.apache.wicket.markup.html.list.ListItem;
 import org.apache.wicket.markup.html.list.ListView;
 import org.apache.wicket.model.IModel;
+import org.apache.wicket.request.resource.PackageResourceReference;
 
 public abstract class AppendableListView<T> extends ListView<T>
 {
+
+	public static final HeaderItem SCRIPT = JavaScriptHeaderItem.forReference(new PackageResourceReference(AppendableListView.class, "AppendableListView.js"));
+
 	public AppendableListView(String id)
 	{
 		super(id);
@@ -38,14 +44,25 @@ public abstract class AppendableListView<T> extends ListView<T>
 
 	protected abstract void populateItem(AppendableListItem<T> item);
 
-	public class AppendableListItem<U extends T> extends ListItem<U>
+	public AppendableListView<T> appendNewItemFor(T newObject, AjaxRequestTarget ajax)
 	{
-		public AppendableListItem(String id, int index, IModel<U> model)
+		getModel().getObject().add(newObject);
+		final int newIndex = getModel().getObject().size() - 1;
+		final AppendableListItem<T> newItem = newItem(newIndex, getListItemModel(getModel(), newIndex));
+		populateItem(newItem);
+		add(newItem);
+		ajax.prependJavaScript(String.format("AppendableListView.append("));
+		ajax.add(newItem);
+	}
+
+	public class AppendableListItem<T> extends ListItem<T>
+	{
+		public AppendableListItem(String id, int index, IModel<T> model)
 		{
 			super(id, index, model);
 		}
 
-		public AppendableListItem(int index, IModel<U> model)
+		public AppendableListItem(int index, IModel<T> model)
 		{
 			super(index, model);
 		}
@@ -60,17 +77,6 @@ public abstract class AppendableListView<T> extends ListView<T>
 		{
 			super.onInitialize();
 			setOutputMarkupId(true);
-		}
-
-		public AppendableListItem<U> append(AjaxRequestTarget ajax, U object)
-		{
-			int newIndex = this.getIndex() + 1;
-			IModel<? extends List<T>> listViewModel = AppendableListView.this.getModel();
-			listViewModel.getObject().add(newIndex, object);
-			AppendableListItem<T> newItem = newItem(newIndex, getListItemModel(listViewModel, newIndex));
-			AppendableListView.this.add(newItem);
-			AppendableListView.this.populateItem(newItem);
-
 		}
 	}
 }

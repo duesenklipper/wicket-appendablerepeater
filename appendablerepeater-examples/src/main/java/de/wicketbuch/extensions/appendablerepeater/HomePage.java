@@ -18,6 +18,7 @@ import org.apache.wicket.model.AbstractReadOnlyModel;
 public class HomePage extends WebPage
 {
 	private int counter = 5;
+
 	public HomePage()
 	{
 		List<Integer> list = new ArrayList<>();
@@ -39,11 +40,11 @@ public class HomePage extends WebPage
 				item.add(new AjaxLink<Void>("prepend")
 				{
 					@Override
-					public void onClick(AjaxRequestTarget target)
+					public void onClick(AjaxRequestTarget ajax)
 					{
-						item.append(counter++);
+						item.append(ajax, counter++);
 					}
-				})                                    ;
+				});
 			}
 		});
 	}
