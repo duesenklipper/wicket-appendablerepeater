@@ -3,17 +3,18 @@ package de.wicketbuch.extensions.appendablerepeater;
 import java.util.List;
 
 import org.apache.wicket.ajax.AjaxRequestTarget;
-import org.apache.wicket.markup.head.HeaderItem;
+import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.head.JavaScriptHeaderItem;
 import org.apache.wicket.markup.html.list.ListItem;
 import org.apache.wicket.markup.html.list.ListView;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.request.resource.PackageResourceReference;
+import org.apache.wicket.request.resource.ResourceReference;
 
 public abstract class AppendableListView<T> extends ListView<T>
 {
-
-	public static final HeaderItem SCRIPT = JavaScriptHeaderItem.forReference(new PackageResourceReference(AppendableListView.class, "AppendableListView.js"));
+	public static final ResourceReference SCRIPT = new PackageResourceReference(AppendableListView.class, "AppendableListView.js");
+	private AppendableListItem lastChild;
 
 	public AppendableListView(String id)
 	{
@@ -31,31 +32,54 @@ public abstract class AppendableListView<T> extends ListView<T>
 	}
 
 	@Override
-	protected AppendableListItem<T> newItem(int index, IModel<T> itemModel)
+	protected AppendableListItem newItem(int index, IModel<T> itemModel)
 	{
-		return new AppendableListItem<T>(index, itemModel);
+		return new AppendableListItem(index, itemModel);
 	}
 
 	@Override
 	protected final void populateItem(ListItem<T> item)
 	{
-		populateItem((AppendableListItem<T>) item);
+		populateItem((AppendableListItem) item);
 	}
 
-	protected abstract void populateItem(AppendableListItem<T> item);
+	@Override
+	protected void onInitialize()
+	{
+		super.onInitialize();
+		getParent().setOutputMarkupId(true);
+	}
+
+	@Override
+	public void renderHead(IHeaderResponse response)
+	{
+		super.renderHead(response);
+		response.render(JavaScriptHeaderItem.forReference(SCRIPT));
+	}
+
+	protected abstract void populateItem(AppendableListItem item);
 
 	public AppendableListView<T> appendNewItemFor(T newObject, AjaxRequestTarget ajax)
 	{
 		getModel().getObject().add(newObject);
-		final int newIndex = getModel().getObject().size() - 1;
-		final AppendableListItem<T> newItem = newItem(newIndex, getListItemModel(getModel(), newIndex));
-		populateItem(newItem);
-		add(newItem);
-		ajax.prependJavaScript(String.format("AppendableListView.append("));
-		ajax.add(newItem);
+		if (lastChild == null)
+		{
+			ajax.add(getParent());
+		}
+		else
+		{
+			final int newIndex = getModel().getObject().size() - 1;
+			final AppendableListItem newItem = newItem(newIndex, getListItemModel(getModel(), newIndex));
+			add(newItem);
+			populateItem(newItem);
+			ajax.prependJavaScript(String.format("AppendableListView.appendAfter('%s', '%s');", lastChild.getMarkupId(), newItem
+					.getMarkupId()));
+			ajax.add(newItem);
+		}
+		return this;
 	}
 
-	public class AppendableListItem<T> extends ListItem<T>
+	public class AppendableListItem extends ListItem<T>
 	{
 		public AppendableListItem(String id, int index, IModel<T> model)
 		{
@@ -77,6 +101,13 @@ public abstract class AppendableListView<T> extends ListView<T>
 		{
 			super.onInitialize();
 			setOutputMarkupId(true);
+		}
+
+		@Override
+		protected void onRender()
+		{
+			super.onRender();
+			AppendableListView.this.lastChild = this;
 		}
 	}
 }

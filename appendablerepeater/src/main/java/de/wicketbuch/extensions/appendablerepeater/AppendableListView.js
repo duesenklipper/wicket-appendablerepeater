@@ -8,11 +8,11 @@ var AppendableListView = {
 
 	appendAfter: function (existingId, newId) {
 		var existingElement = document.getElementById(existingId);
-		if (existingElement != parentElement.lastChild) {
+		var parentElement = existingElement.parentElement;
+		if (existingElement != parentElement.lastElementChild) {
 			existingElement = existingElement.nextElementSibling;
 			AppendableListView.insertBefore(existingElement.id, newId);
 		} else {
-			var parentElement = existingElement.parentElement();
 			var newElement = this.newElementFrom(existingElement, newId);
 			parentElement.appendChild(newElement);
 		}

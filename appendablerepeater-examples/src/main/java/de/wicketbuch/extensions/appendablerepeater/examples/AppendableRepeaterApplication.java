@@ -1,4 +1,4 @@
-package de.wicketbuch.extensions.appendablerepeater;
+package de.wicketbuch.extensions.appendablerepeater.examples;
 
 import org.apache.wicket.Page;
 import org.apache.wicket.protocol.http.WebApplication;
