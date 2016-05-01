@@ -1,7 +1,7 @@
 <!--
 
     Copyright (C) 2016 Carl-Eric Menzel <cmenzel@wicketbuch.de>
-    and possibly other SimpleLambda contributors.
+    and possibly other appendablerepeater contributors.
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -47,6 +47,17 @@
         <dependency>
             <groupId>org.apache.wicket</groupId>
             <artifactId>wicket-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-jdk14</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>3.1.0</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

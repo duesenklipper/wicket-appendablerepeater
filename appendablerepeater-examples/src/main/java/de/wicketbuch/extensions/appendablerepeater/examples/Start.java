@@ -1,4 +1,20 @@
-package de.wicketbuch.extensions.appendablerepeater;
+/**
+ * Copyright (C) 2016 Carl-Eric Menzel <cmenzel@wicketbuch.de>
+ * and possibly other appendablerepeater contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package de.wicketbuch.extensions.appendablerepeater.examples;
 
 import java.lang.management.ManagementFactory;
 
@@ -77,6 +93,11 @@ public class Start
 		bb.setServer(server);
 		bb.setContextPath("/");
 		bb.setWar("src/main/webapp");
+
+		// uncomment the next two lines if you want to start Jetty with WebSocket (JSR-356) support
+		// you need org.apache.wicket:wicket-native-websocket-javax in the classpath!
+		// ServerContainer serverContainer = WebSocketServerContainerInitializer.configureContext(bb);
+		// serverContainer.addEndpoint(new WicketServerEndpointConfig());
 
 		// uncomment next line if you want to test with JSESSIONID encoded in the urls
 		// ((AbstractSessionManager)

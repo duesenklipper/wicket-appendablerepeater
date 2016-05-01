@@ -2,7 +2,7 @@
 <!--
 
     Copyright (C) 2016 Carl-Eric Menzel <cmenzel@wicketbuch.de>
-    and possibly other SimpleLambda contributors.
+    and possibly other appendablerepeater contributors.
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@
         <wicket.version>7.2.0</wicket.version>
         <jetty9.version>9.2.13.v20150730</jetty9.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <slf4j.version>1.7.21</slf4j.version>
     </properties>
 
     <modules>
@@ -62,28 +63,19 @@
             </dependency>
             <!--  JETTY DEPENDENCIES FOR TESTING  -->
             <dependency>
-                <groupId>org.eclipse.jetty</groupId>
-                <artifactId>jetty-server</artifactId>
+                <groupId>org.eclipse.jetty.aggregate</groupId>
+                <artifactId>jetty-all</artifactId>
                 <version>${jetty9.version}</version>
-                <scope>test</scope>
             </dependency>
             <dependency>
-                <groupId>org.eclipse.jetty</groupId>
-                <artifactId>jetty-webapp</artifactId>
-                <version>${jetty9.version}</version>
-                <scope>test</scope>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.eclipse.jetty</groupId>
-                <artifactId>jetty-util</artifactId>
-                <version>${jetty9.version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.jetty</groupId>
-                <artifactId>jetty-jmx</artifactId>
-                <version>${jetty9.version}</version>
-                <scope>test</scope>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-jdk14</artifactId>
+                <version>${slf4j.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -125,6 +117,13 @@
             <plugin>
                 <groupId>com.mycila</groupId>
                 <artifactId>license-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>**/LICENSE</exclude>
+                        <exclude>**/keystore</exclude>
+                        <exclude>**/jetty*.xml</exclude>
+                    </excludes>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
