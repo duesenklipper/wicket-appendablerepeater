@@ -16,6 +16,7 @@
  */
 package de.wicketbuch.extensions.appendablerepeater;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.wicket.ajax.AjaxRequestTarget;
@@ -24,6 +25,7 @@ import org.apache.wicket.markup.head.JavaScriptHeaderItem;
 import org.apache.wicket.markup.html.list.ListItem;
 import org.apache.wicket.markup.html.list.ListView;
 import org.apache.wicket.model.IModel;
+import org.apache.wicket.request.cycle.RequestCycle;
 import org.apache.wicket.request.resource.PackageResourceReference;
 import org.apache.wicket.request.resource.ResourceReference;
 
@@ -42,9 +44,13 @@ public abstract class AppendableListView<T> extends ListView<T>
 {
 	public static final ResourceReference SCRIPT = new PackageResourceReference(AppendableListView.class, "AppendableListView.js");
 
-	// a reference to the last rendered child. This is used to determine  the HTML element name to
-	// synthesize a new elemen
+	// a reference to the last rendered child. This is used to get the markupId of the element after which the new
+	// one should be rendered.
 	private AppendableListItem lastChild;
+
+	// elements that were added during a full repaint (i.e. when the list was initially empty).
+	// see #populateItem
+	private List<T> newElements;
 
 	public AppendableListView(String id)
 	{
@@ -71,6 +77,17 @@ public abstract class AppendableListView<T> extends ListView<T>
 	protected final void populateItem(ListItem<T> item)
 	{
 		populateItem((AppendableListItem) item);
+		if (newElements != null && newElements.contains(item.getModelObject()))
+		{
+			// if this is an ajax request and we have newElements, that means it's a
+			// full repaint for this repeater and we should give these new elements
+			// the opportunity to be animated.
+			AjaxRequestTarget ajax = RequestCycle.get().find(AjaxRequestTarget.class);
+			if (ajax != null)
+			{
+				onAppendItem((AppendableListItem) item, ajax);
+			}
+		}
 	}
 
 	@Override
@@ -87,37 +104,73 @@ public abstract class AppendableListView<T> extends ListView<T>
 		response.render(JavaScriptHeaderItem.forReference(SCRIPT));
 	}
 
+	@Override
+	protected void onAfterRender()
+	{
+		super.onAfterRender();
+		newElements = null;
+	}
+
 	protected abstract void populateItem(AppendableListItem item);
 
 	/**
-	 * Append <code>newObject</code> to the end of the model list, create a new ListItem for it, and render it via
-	 * AJAX.
+	 * Append <code>newElement</code> to the end of the model list, create a new ListItem for it, and render it via
+	 * AJAX. For further actions on the new ListItem, see {@link #onAppendItem(AppendableListItem, AjaxRequestTarget)}.
+	 * If <code>ajax</code> is null, then <code>newElement</code> is simply added to the model list, the
+	 * non-ajax full-page rendering will render it as well. If <code>ajax</code> is present but the list was empty so
+	 * far, then the {@linkplain AppendableListView}'s parent is rendered via AJAX. Otherwise, only the new ListItem
+	 * is rendered.
 	 *
-	 * @param newObject The new list element
-	 * @param ajax      The ajax request target
+	 * @param newElement The new list element
+	 * @param ajax       The ajax request target
 	 * @return this, for method chaining
 	 */
-	public AppendableListView<T> appendNewItemFor(T newObject, AjaxRequestTarget ajax)
+	public AppendableListView<T> appendNewItemFor(T newElement, AjaxRequestTarget ajax)
 	{
-		getModel().getObject().add(newObject);
-		if (lastChild == null)
+		if (getModel().getObject().isEmpty())
 		{
-			ajax.add(getParent());
+			// if we currently have no list elements, then whatever was the last element is now stale and we need to
+			// repaint anyway.
+			lastChild = null;
 		}
-		else
+		getModel().getObject().add(newElement);
+		if (ajax != null)
 		{
-			final int newIndex = getModel().getObject().size() - 1;
-			final AppendableListItem newItem = newItem(newIndex, getListItemModel(getModel(), newIndex));
-			add(newItem);
-			populateItem(newItem);
-			onAppendItem(newItem, ajax);
-			ajax.prependJavaScript(String.format("AppendableListView.appendAfter('%s', '%s');", lastChild.getMarkupId(), newItem
-					.getMarkupId()));
-			ajax.add(newItem);
+			if (lastChild == null)
+			{
+				ajax.add(getParent());
+				if (newElements == null)
+				{
+					newElements = new ArrayList<>();
+				}
+				newElements.add(newElement);
+			}
+			else
+			{
+				final int newIndex = getModel().getObject().size() - 1;
+				final AppendableListItem newItem = newItem(newIndex, getListItemModel(getModel(), newIndex));
+				add(newItem);
+				populateItem(newItem);
+				onAppendItem(newItem, ajax);
+				ajax.prependJavaScript(String.format("AppendableListView.appendAfter('%s', '%s');", lastChild.getMarkupId(), newItem
+						.getMarkupId()));
+				ajax.add(newItem);
+				lastChild = newItem;
+			}
 		}
 		return this;
 	}
 
+	/**
+	 * Perform any special actions that need to be done on a ListItem being appended in an AJAX call. This could be used
+	 * to e.g. add fade-in animations or other such things. This method is called by
+	 * {@link #appendNewItemFor(Object, AjaxRequestTarget)} after the new ListItem is populated by
+	 * {@link #populateItem(AppendableListItem)}. It is not called if {@linkplain #appendNewItemFor} was called
+	 * without an {@linkplain AjaxRequestTarget}.
+	 *
+	 * @param newItem The new ListItem to be appended
+	 * @param ajax    The ajax request target
+	 */
 	protected void onAppendItem(AppendableListItem newItem, AjaxRequestTarget ajax)
 	{
 
