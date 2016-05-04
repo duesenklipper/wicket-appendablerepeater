@@ -25,11 +25,11 @@
     <parent>
         <artifactId>appendablerepeater-parent</artifactId>
         <groupId>de.wicketbuch.extensions</groupId>
-        <version>1.1-SNAPSHOT</version>
+        <version>1.0.wicket14-SNAPSHOT</version>
     </parent>
     <artifactId>appendablerepeater-examples</artifactId>
     <packaging>war</packaging>
-    <version>1.1-SNAPSHOT</version>
+    <version>1.0.wicket14-SNAPSHOT</version>
     <name>appendablerepeater-examples</name>
 
     <licenses>
@@ -46,7 +46,7 @@
         <!--  WICKET DEPENDENCIES -->
         <dependency>
             <groupId>org.apache.wicket</groupId>
-            <artifactId>wicket-core</artifactId>
+            <artifactId>wicket</artifactId>
         </dependency>
         <!--  JETTY DEPENDENCIES FOR TESTING  -->
         <dependency>

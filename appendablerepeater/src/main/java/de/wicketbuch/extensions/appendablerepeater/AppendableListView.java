@@ -19,15 +19,15 @@ package de.wicketbuch.extensions.appendablerepeater;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.wicket.ResourceReference;
 import org.apache.wicket.ajax.AjaxRequestTarget;
-import org.apache.wicket.markup.head.IHeaderResponse;
-import org.apache.wicket.markup.head.JavaScriptHeaderItem;
+import org.apache.wicket.markup.MarkupStream;
+import org.apache.wicket.markup.html.IHeaderContributor;
+import org.apache.wicket.markup.html.IHeaderResponse;
+import org.apache.wicket.markup.html.PackageResourceReference;
 import org.apache.wicket.markup.html.list.ListItem;
 import org.apache.wicket.markup.html.list.ListView;
 import org.apache.wicket.model.IModel;
-import org.apache.wicket.request.cycle.RequestCycle;
-import org.apache.wicket.request.resource.PackageResourceReference;
-import org.apache.wicket.request.resource.ResourceReference;
 
 /**
  * A {@link ListView} implementation that can dynamically append items via AJAX, without repainting the entire list. It
@@ -40,7 +40,7 @@ import org.apache.wicket.request.resource.ResourceReference;
  * @param <T> The list element type
  * @author Carl-Eric Menzel cmenzel@wicketbuch.de
  */
-public abstract class AppendableListView<T> extends ListView<T>
+public abstract class AppendableListView<T> extends ListView<T> implements IHeaderContributor
 {
 	private static final ResourceReference SCRIPT = new PackageResourceReference(AppendableListView.class,
 		"AppendableListView.js");
@@ -69,9 +69,9 @@ public abstract class AppendableListView<T> extends ListView<T>
 	}
 
 	@Override
-	protected AppendableListItem newItem(int index, IModel<T> itemModel)
+	protected AppendableListItem newItem(int index)
 	{
-		return new AppendableListItem(index, itemModel);
+		return new AppendableListItem(index, getListItemModel(getModel(), index));
 	}
 
 	@Override
@@ -83,7 +83,7 @@ public abstract class AppendableListView<T> extends ListView<T>
 			// if this is an ajax request and we have newElements, that means it's a
 			// full repaint for this repeater and we should give these new elements
 			// the opportunity to be animated.
-			AjaxRequestTarget ajax = RequestCycle.get().find(AjaxRequestTarget.class);
+			AjaxRequestTarget ajax = AjaxRequestTarget.get();
 			if (ajax != null)
 			{
 				onAppendItem((AppendableListItem) item, ajax);
@@ -101,8 +101,7 @@ public abstract class AppendableListView<T> extends ListView<T>
 	@Override
 	public void renderHead(IHeaderResponse response)
 	{
-		super.renderHead(response);
-		response.render(JavaScriptHeaderItem.forReference(SCRIPT));
+		response.renderJavascriptReference(SCRIPT);
 	}
 
 	@Override
@@ -139,7 +138,7 @@ public abstract class AppendableListView<T> extends ListView<T>
 		{
 			if (lastChild == null)
 			{
-				ajax.add(getParent());
+				ajax.addComponent(getParent());
 				if (newElements == null)
 				{
 					newElements = new ArrayList<>();
@@ -149,13 +148,14 @@ public abstract class AppendableListView<T> extends ListView<T>
 			else
 			{
 				final int newIndex = getModel().getObject().size() - 1;
-				final AppendableListItem newItem = newItem(newIndex, getListItemModel(getModel(), newIndex));
+				final AppendableListItem newItem = newItem(newIndex);
 				add(newItem);
 				populateItem(newItem);
 				onAppendItem(newItem, ajax);
-				ajax.prependJavaScript(String.format("AppendableListView.appendAfter('%s', '%s');", lastChild.getMarkupId(), newItem
+				ajax.prependJavascript(String.format("AppendableListView.appendAfter('%s', '%s');", lastChild
+						.getMarkupId(), newItem
 						.getMarkupId()));
-				ajax.add(newItem);
+				ajax.addComponent(newItem);
 				lastChild = newItem;
 			}
 		}
@@ -179,19 +179,9 @@ public abstract class AppendableListView<T> extends ListView<T>
 
 	public class AppendableListItem extends ListItem<T>
 	{
-		public AppendableListItem(String id, int index, IModel<T> model)
-		{
-			super(id, index, model);
-		}
-
 		public AppendableListItem(int index, IModel<T> model)
 		{
 			super(index, model);
-		}
-
-		public AppendableListItem(String id, int index)
-		{
-			super(id, index);
 		}
 
 		@Override
@@ -202,9 +192,9 @@ public abstract class AppendableListView<T> extends ListView<T>
 		}
 
 		@Override
-		protected void onRender()
+		protected void onRender(MarkupStream ms)
 		{
-			super.onRender();
+			super.onRender(ms);
 			AppendableListView.this.lastChild = this;
 		}
 	}

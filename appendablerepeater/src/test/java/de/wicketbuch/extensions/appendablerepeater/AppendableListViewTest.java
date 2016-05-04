@@ -16,9 +16,6 @@
  */
 package de.wicketbuch.extensions.appendablerepeater;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,9 +48,9 @@ public class AppendableListViewTest
 		WicketTester tester = new WicketTester();
 		tester.startPage(new TestPage(3));
 		tester.clickLink("append", true);
-		String lastResponse = tester.getLastResponseAsString();
-		assertTrue("ajax response should contain new item", lastResponse.contains("<span wicket:id=\"label\">test_3</span>"));
-		assertFalse("ajax response should not contain old items", lastResponse.contains("test_1"));
+		tester.dumpPage();
+		tester.assertContains("<span>test_3</span>");
+		tester.assertContainsNot("test_1");
 	}
 
 	@Test
