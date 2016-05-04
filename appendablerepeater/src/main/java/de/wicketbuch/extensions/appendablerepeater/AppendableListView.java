@@ -20,12 +20,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.wicket.ajax.AjaxRequestTarget;
-import org.apache.wicket.markup.head.IHeaderResponse;
-import org.apache.wicket.markup.head.JavaScriptHeaderItem;
+import org.apache.wicket.markup.html.IHeaderResponse;
 import org.apache.wicket.markup.html.list.ListItem;
 import org.apache.wicket.markup.html.list.ListView;
 import org.apache.wicket.model.IModel;
-import org.apache.wicket.request.cycle.RequestCycle;
 import org.apache.wicket.request.resource.PackageResourceReference;
 import org.apache.wicket.request.resource.ResourceReference;
 
@@ -83,7 +81,7 @@ public abstract class AppendableListView<T> extends ListView<T>
 			// if this is an ajax request and we have newElements, that means it's a
 			// full repaint for this repeater and we should give these new elements
 			// the opportunity to be animated.
-			AjaxRequestTarget ajax = RequestCycle.get().find(AjaxRequestTarget.class);
+			AjaxRequestTarget ajax = AjaxRequestTarget.get();
 			if (ajax != null)
 			{
 				onAppendItem((AppendableListItem) item, ajax);
@@ -102,7 +100,7 @@ public abstract class AppendableListView<T> extends ListView<T>
 	public void renderHead(IHeaderResponse response)
 	{
 		super.renderHead(response);
-		response.render(JavaScriptHeaderItem.forReference(SCRIPT));
+		response.renderJavaScriptReference(SCRIPT);
 	}
 
 	@Override
@@ -179,19 +177,9 @@ public abstract class AppendableListView<T> extends ListView<T>
 
 	public class AppendableListItem extends ListItem<T>
 	{
-		public AppendableListItem(String id, int index, IModel<T> model)
-		{
-			super(id, index, model);
-		}
-
 		public AppendableListItem(int index, IModel<T> model)
 		{
 			super(index, model);
-		}
-
-		public AppendableListItem(String id, int index)
-		{
-			super(id, index);
 		}
 
 		@Override
