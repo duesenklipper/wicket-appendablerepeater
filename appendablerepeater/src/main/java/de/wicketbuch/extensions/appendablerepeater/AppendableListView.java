@@ -52,6 +52,7 @@ public abstract class AppendableListView<T> extends ListView<T> implements IHead
 	// elements that were added during a full repaint (i.e. when the list was initially empty).
 	// see #populateItem
 	private List<T> newElements;
+	private String itemTagName;
 
 	public AppendableListView(String id)
 	{
@@ -152,9 +153,13 @@ public abstract class AppendableListView<T> extends ListView<T> implements IHead
 				add(newItem);
 				populateItem(newItem);
 				onAppendItem(newItem, ajax);
-				ajax.prependJavascript(String.format("AppendableListView.appendAfter('%s', '%s');", lastChild
+				if (itemTagName == null)
+				{
+					itemTagName = newItem.getItemTagName();
+				}
+				ajax.prependJavascript(String.format("AppendableListView.appendAfter('%s', '%s', '%s');", lastChild
 						.getMarkupId(), newItem
-						.getMarkupId()));
+						.getMarkupId(), itemTagName));
 				ajax.addComponent(newItem);
 				lastChild = newItem;
 			}
@@ -196,6 +201,12 @@ public abstract class AppendableListView<T> extends ListView<T> implements IHead
 		{
 			super.onRender(ms);
 			AppendableListView.this.lastChild = this;
+		}
+
+		public String getItemTagName()
+		{
+			final MarkupStream markupStream = this.locateMarkupStream();
+			return markupStream.getTag().getName();
 		}
 	}
 }
