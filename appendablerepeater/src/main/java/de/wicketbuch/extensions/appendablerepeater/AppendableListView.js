@@ -16,18 +16,19 @@
  */
 var AppendableListView = {
 
-	newElement: function (newId) {
-		var newElement = document.createElement("span");
+	newElement: function (newId, tagName) {
+		var newElement = document.createElement(tagName);
 		newElement.id = newId;
 		newElement.style.display = "none";
 		return newElement;
 	},
 
-	appendAfter: function (existingId, newId) {
+	appendAfter: function (existingId, newId, tagName) {
 		var existingElement = document.getElementById(existingId);
 		var parentElement = existingElement.parentElement;
-		var newElement = AppendableListView.newElement(newId);
-		if (existingElement != parentElement.lastElementChild) {
+		var newElement = AppendableListView.newElement(newId, tagName);
+		// IE up to 8 doesn't know lastElementChild :-(
+ 		if (existingElement != parentElement.children[parentElement.children.length - 1]) { 
 			existingElement = existingElement.nextElementSibling;
 			AppendableListView.insertBefore(existingElement.id, newId);
 		} else {
