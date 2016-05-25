@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.markup.MarkupStream;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.head.JavaScriptHeaderItem;
 import org.apache.wicket.markup.html.list.ListItem;
@@ -52,6 +53,7 @@ public abstract class AppendableListView<T> extends ListView<T>
 	// elements that were added during a full repaint (i.e. when the list was initially empty).
 	// see #populateItem
 	private List<T> newElements;
+	private String itemTagName;
 
 	public AppendableListView(String id)
 	{
@@ -153,8 +155,13 @@ public abstract class AppendableListView<T> extends ListView<T>
 				add(newItem);
 				populateItem(newItem);
 				onAppendItem(newItem, ajax);
-				ajax.prependJavaScript(String.format("AppendableListView.appendAfter('%s', '%s');", lastChild.getMarkupId(), newItem
-						.getMarkupId()));
+				if (itemTagName == null)
+				{
+					itemTagName = newItem.getItemTagName();
+				}
+				ajax.prependJavaScript(String.format("AppendableListView.appendAfter('%s', '%s', '%s');", lastChild
+						.getMarkupId(), newItem
+						.getMarkupId(), itemTagName));
 				ajax.add(newItem);
 				lastChild = newItem;
 			}
@@ -206,6 +213,12 @@ public abstract class AppendableListView<T> extends ListView<T>
 		{
 			super.onRender();
 			AppendableListView.this.lastChild = this;
+		}
+
+		public String getItemTagName()
+		{
+			final MarkupStream markupStream = new MarkupStream(getMarkup());
+			return markupStream.getTag().getName();
 		}
 	}
 }
