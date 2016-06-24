@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.wicketbuch.extensions.appendablerepeater.examples;
+package de.wicketbuch.extensions.appendablerepeater.listview.examples;
 
 import org.apache.wicket.Page;
 import org.apache.wicket.protocol.http.WebApplication;

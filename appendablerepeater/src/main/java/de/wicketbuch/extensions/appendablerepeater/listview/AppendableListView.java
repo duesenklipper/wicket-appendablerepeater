@@ -14,10 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.wicketbuch.extensions.appendablerepeater;
-
-import java.util.ArrayList;
-import java.util.List;
+package de.wicketbuch.extensions.appendablerepeater.listview;
 
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.markup.MarkupStream;
@@ -27,6 +24,9 @@ import org.apache.wicket.markup.html.list.ListView;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.request.resource.PackageResourceReference;
 import org.apache.wicket.request.resource.ResourceReference;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A {@link ListView} implementation that can dynamically append items via AJAX, without repainting the entire list. It
