@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.wicketbuch.extensions.appendablerepeater;
+package de.wicketbuch.extensions.appendablerepeater.listview;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
