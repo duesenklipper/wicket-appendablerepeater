@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.wicketbuch.extensions.appendablerepeater.examples;
+package de.wicketbuch.extensions.appendablerepeater.listview.examples;
 
 import java.text.DateFormat;
 import java.util.ArrayList;
@@ -22,7 +22,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-import de.wicketbuch.extensions.appendablerepeater.AppendableListView;
+import de.wicketbuch.extensions.appendablerepeater.listview.AppendableListView;
 import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
