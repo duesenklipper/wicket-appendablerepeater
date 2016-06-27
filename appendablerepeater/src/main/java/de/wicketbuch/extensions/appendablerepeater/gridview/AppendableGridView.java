@@ -1,105 +1,172 @@
 package de.wicketbuch.extensions.appendablerepeater.gridview;
 
+import static sun.swing.MenuItemLayoutHelper.max;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.SortedMap;
+import java.util.TreeMap;
+
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.markup.repeater.Item;
 import org.apache.wicket.markup.repeater.data.GridView;
 import org.apache.wicket.markup.repeater.data.IDataProvider;
 import org.apache.wicket.model.IModel;
 
-import java.util.Map;
+public abstract class AppendableGridView<T> extends GridView<T>
+{
 
-import static sun.swing.MenuItemLayoutHelper.max;
+	private SortedMap<Integer, AppendableItem> renderedEmptyItems;
+	private long lastItemCount = 0;
+	private int lastRenderedIndex;
 
-public abstract class AppendableGridView<T> extends GridView<T> {
+	public AppendableGridView(String id, IDataProvider dataProvider)
+	{
+		super(id, dataProvider);
+	}
 
-    private Map<Integer, AppendableItem<T>> renderedEmptyItems;
-    private long lastItemCount = 0;
+	@Override
+	protected void onInitialize()
+	{
+		super.onInitialize();
+		getParent().setOutputMarkupId(true);
+	}
 
-    public AppendableGridView(String id, IDataProvider dataProvider) {
-        super(id, dataProvider);
-    }
+	@Override
+	protected void onBeforeRender()
+	{
+		super.onBeforeRender();
+		if (renderedEmptyItems != null)
+		{
+			renderedEmptyItems.clear();
+		}
+		lastRenderedIndex = 0;
+	}
 
-    @Override
-    protected void onInitialize() {
-        super.onInitialize();
-        getParent().setOutputMarkupId(true);
-    }
+	@Override
+	protected AppendableItem newEmptyItem(String id, int index)
+	{
+		return new AppendableItem(id, index);
+	}
 
-    @Override
-    protected void onBeforeRender() {
-        super.onBeforeRender();
-        if (renderedEmptyItems != null) {
-            renderedEmptyItems.clear();
-        }
-    }
+	@Override
+	protected AppendableItem newItem(String id, int index, IModel<T> model)
+	{
+		return new AppendableItem(id, index, model);
+	}
 
-    @Override
-    protected AppendableItem<T> newEmptyItem(String id, int index) {
-        return new AppendableItem<>(id, index);
-    }
+	@Override
+	protected AppendableRowItem newRowItem(String id, int index)
+	{
+		return new AppendableRowItem(id, index);
+	}
 
-    @Override
-    protected AppendableItem<T> newItem(String id, int index, IModel<T> model) {
-        return new AppendableItem<>(id, index, model);
-    }
+	public boolean itemsAppended(AjaxRequestTarget ajax)
+	{
+		final long lastPage = getPageCount() - 1;
+		if (getCurrentPage() == lastPage)
+		{
+			// not on the last page -> just go to last page
+			ajax.add(getParent());
+			setCurrentPage(lastPage);
+			return false;
+		}
+		else
+		{
+			final long newItemCount = getItemCount();
+			final long unrenderedItemCount = newItemCount - lastItemCount;
+			if (unrenderedItemCount > 0)
+			{
+				final long itemCountOnLastPage = lastItemCount % getItemsPerPage();
+				long availableSlots = getItemsPerPage() - itemCountOnLastPage;
+				final Iterator<AppendableItem> emptyItemsToReplace = renderedEmptyItems.values().iterator();
+				final Iterator<IModel<T>> unrenderedItemModels = getItemModels(lastItemCount, unrenderedItemCount);
+				int index = lastRenderedIndex;
+				while (availableSlots > 0 && emptyItemsToReplace.hasNext() && unrenderedItemModels.hasNext())
+				{
+					final AppendableItem emptyItem = emptyItemsToReplace.next();
+					final IModel<T> model = unrenderedItemModels.next();
+					final AppendableItem newItem = newItem(emptyItem.getId(), index, model);
+					emptyItem.replaceWith(newItem);
+					ajax.add(newItem);
+					itemAppended(newItem, ajax);
+					availableSlots--;
+					index++;
+				}
+				final List<AppendableItem> newItems = new ArrayList<AppendableItem>();
 
-    @Override
-    protected AppendableRowItem newRowItem(String id, int index) {
-        return new AppendableRowItem(id, index);
-    }
+				while (unrenderedItemModels.hasNext() && availableSlots > 0)
+				{
+					IModel<T> model = unrenderedItemModels.next();
+					final AppendableItem newItem = newItem(newChildId(), index, model);
+					newItems.add(newItem);
+					itemAppended(newItem, ajax);
+				}
 
-    public boolean itemsAppended(AjaxRequestTarget ajax) {
-        final long lastPage = getPageCount() - 1;
-        if (getCurrentPage() == lastPage) {
-            // not on the last page -> just go to last page
-            ajax.add(getParent());
-            setCurrentPage(lastPage);
-            return false;
-        } else {
-            final long newItemCount = getItemCount();
-            final long unrenderedItemCount = newItemCount - lastItemCount;
-            if (unrenderedItemCount > 0) {
-                // need to render new items
-                final long itemsPerPage = getItemsPerPage();
-                final long itemsOnLastPage = lastItemCount % itemsPerPage;
-                if (itemsOnLastPage < itemsPerPage) {
 
-                }
-            } else {
 
-            }
-        }
-    }
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+	}
 
-    @Override
-    protected void onAfterRender() {
-        super.onAfterRender();
-        this.lastItemCount = getItemCount();
-    }
+	protected void itemAppended(AppendableItem item, AjaxRequestTarget ajax)
+	{
 
-    /**
-     * Created by calle on 24.06.16.
-     */
-    protected class AppendableItem<T> extends Item<T> {
-        public AppendableItem(String id, int index, IModel<T> model) {
-            super(id, index, model);
-            setOutputMarkupId(true);
-        }
+	}
 
-        public AppendableItem(String id, int index) {
-            this(id, index, null);
-        }
+	@Override
+	protected void onAfterRender()
+	{
+		super.onAfterRender();
+		this.lastItemCount = getItemCount();
+	}
 
-        @Override
-        protected void onAfterRender() {
-            super.onAfterRender();
-            AppendableGridView.this.maxRenderedIndex = max(AppendableGridView.this.maxRenderedIndex, this.getIndex());
-        }
-    }
+	/**
+	 * Created by calle on 24.06.16.
+	 */
+	protected class AppendableItem extends Item<T>
+	{
+		public AppendableItem(String id, int index, IModel<T> model)
+		{
+			super(id, index, model);
+			setOutputMarkupId(true);
+		}
 
-    protected class AppendableRowItem extends Item<Object> {
-        public AppendableRowItem(String id, int index) {
-            super(id, index);
-        }
-    }
+		public AppendableItem(String id, int index)
+		{
+			this(id, index, null);
+		}
+
+		@Override
+		protected void onAfterRender()
+		{
+			super.onAfterRender();
+			if (this.getModel() == null)
+			{
+				if (renderedEmptyItems == null)
+				{
+					renderedEmptyItems = new TreeMap<>();
+				}
+				renderedEmptyItems.put(this.getIndex(), this);
+			}
+			else
+			{
+				lastRenderedIndex = max(lastRenderedIndex, this.getIndex());
+			}
+		}
+	}
+
+	protected class AppendableRowItem extends Item<Object>
+	{
+		public AppendableRowItem(String id, int index)
+		{
+			super(id, index);
+		}
+	}
 }
