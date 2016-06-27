@@ -23,8 +23,6 @@ import java.util.Date;
 import java.util.List;
 
 import de.wicketbuch.extensions.appendablerepeater.listview.AppendableListView;
-import org.apache.wicket.Component;
-import de.wicketbuch.extensions.appendablerepeater.AppendableListView;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.behavior.AttributeAppender;
