@@ -1,6 +1,12 @@
 # Appendable Repeaters for Wicket
 
-Current version: **1.0**
+**New repository, see below!**
+
+Current versions:
+ - **1.2.wicket7** for Wicket 7.x
+ - **1.2.wicket6** for Wicket 6.x
+ - **1.2.wicket5** for Wicket 1.5.x
+ - **1.2.wicket4** for Wicket 1.4.x
 
 Repeaters in Wicket, like `ListView`, are obviously useful. Attaching to the tags that are to be repeated (like `<li>`) rather than the tags that surround them (like `<ul>`) makes them very flexible. The only problem is that this makes it a little awkward to append additional items on the fly in Ajax calls.
 
@@ -17,7 +23,7 @@ To use it, add the following repository to your `pom.xml`:
     <repositories>
       <repository>
         <id>duesenklipper</id>
-        <url>http://duesenklipper.github.com/maven/releases</url>
+        <url>https://maven.duesenklipper.de/releases</url>
         <snapshots>
           <enabled>false</enabled>
         </snapshots>
@@ -32,6 +38,6 @@ Then add the following dependency:
     <dependency>
         <groupId>de.wicketbuch.extensions</groupId>
         <artifactId>appendablerepeater</artifactId>
-        <version>1.0</version>
+        <version>1.2.wicket6</version>
     </dependency>
 
