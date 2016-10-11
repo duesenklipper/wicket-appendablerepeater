@@ -1,5 +1,7 @@
 # Appendable Repeaters for Wicket
 
+**New repository, see below!**
+
 Current versions:
  - **1.2.wicket7** for Wicket 7.x
  - **1.2.wicket6** for Wicket 6.x
@@ -21,7 +23,7 @@ To use it, add the following repository to your `pom.xml`:
     <repositories>
       <repository>
         <id>duesenklipper</id>
-        <url>http://duesenklipper.github.com/maven/releases</url>
+        <url>https://maven.duesenklipper.de/releases</url>
         <snapshots>
           <enabled>false</enabled>
         </snapshots>
@@ -36,6 +38,6 @@ Then add the following dependency:
     <dependency>
         <groupId>de.wicketbuch.extensions</groupId>
         <artifactId>appendablerepeater</artifactId>
-        <version>1.0</version>
+        <version>1.2.wicket7</version>
     </dependency>
 
