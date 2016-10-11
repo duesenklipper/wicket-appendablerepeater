@@ -3,10 +3,10 @@
 **New repository, see below!**
 
 Current versions:
- - **1.2.wicket7** for Wicket 7.x
- - **1.2.wicket6** for Wicket 6.x
- - **1.2.wicket5** for Wicket 1.5.x
- - **1.2.wicket4** for Wicket 1.4.x
+ - **1.2.1.wicket7** for Wicket 7.x
+ - **1.2.1.wicket6** for Wicket 6.x
+ - **1.2.1.wicket5** for Wicket 1.5.x
+ - **1.2.1.wicket4** for Wicket 1.4.x
 
 Repeaters in Wicket, like `ListView`, are obviously useful. Attaching to the tags that are to be repeated (like `<li>`) rather than the tags that surround them (like `<ul>`) makes them very flexible. The only problem is that this makes it a little awkward to append additional items on the fly in Ajax calls.
 
