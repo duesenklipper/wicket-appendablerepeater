@@ -25,11 +25,11 @@
     <parent>
         <artifactId>appendablerepeater-parent</artifactId>
         <groupId>de.wicketbuch.extensions</groupId>
-        <version>1.3.wicket4-SNAPSHOT</version>
+        <version>1.3.0.wicket4-SNAPSHOT</version>
     </parent>
     <artifactId>appendablerepeater-examples</artifactId>
     <packaging>war</packaging>
-    <version>1.3.wicket4-SNAPSHOT</version>
+    <version>1.3.0.wicket4-SNAPSHOT</version>
     <name>appendablerepeater-examples</name>
 
     <licenses>
