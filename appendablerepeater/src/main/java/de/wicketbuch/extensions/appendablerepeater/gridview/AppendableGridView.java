@@ -20,6 +20,7 @@ public abstract class AppendableGridView<T> extends GridView<T>
 	private SortedMap<Integer, AppendableItem> renderedEmptyItems;
 	private long lastItemCount = 0;
 	private int lastRenderedIndex;
+	private AppendableRowItem lastRenderedRow;
 
 	public AppendableGridView(String id, IDataProvider dataProvider)
 	{
@@ -105,7 +106,6 @@ public abstract class AppendableGridView<T> extends GridView<T>
 				}
 
 
-
 				return true;
 			}
 			else
@@ -167,6 +167,13 @@ public abstract class AppendableGridView<T> extends GridView<T>
 		public AppendableRowItem(String id, int index)
 		{
 			super(id, index);
+		}
+
+		@Override
+		protected void onRender()
+		{
+			super.onRender();
+			AppendableGridView.this.lastRenderedRow = this;
 		}
 	}
 }
