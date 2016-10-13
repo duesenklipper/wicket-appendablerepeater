@@ -32,6 +32,7 @@ import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.link.Link;
 import org.apache.wicket.model.AbstractReadOnlyModel;
+import org.apache.wicket.model.Model;
 
 /**
  * Created by calle on 19/04/16.
@@ -49,7 +50,7 @@ public class HomePage extends WebPage
 			@Override
 			protected void populateItem(final AppendableListItem item)
 			{
-				item.add(new Label("index", item.getModelObject()));
+				item.add(new Label("index", item.getModel()));
 				item.add(new Label("timestamp", new AbstractReadOnlyModel<String>()
 				{
 					@Override
@@ -63,7 +64,7 @@ public class HomePage extends WebPage
 			@Override
 			protected void onAppendItem(AppendableListItem newItem, AjaxRequestTarget ajax)
 			{
-				newItem.add(new AttributeAppender("style", "display:none;", ";") {
+				newItem.add(new AttributeAppender("style", Model.of("display:none;"), ";") {
 					@Override
 					public boolean isTemporary(Component component)
 					{
@@ -102,7 +103,7 @@ public class HomePage extends WebPage
 			@Override
 			protected void populateItem(final AppendableListItem item)
 			{
-				item.add(new Label("index", item.getModelObject()));
+				item.add(new Label("index", item.getModel()));
 				item.add(new Label("timestamp", new AbstractReadOnlyModel<String>()
 				{
 					@Override
@@ -116,7 +117,7 @@ public class HomePage extends WebPage
 			@Override
 			protected void onAppendItem(AppendableListItem newItem, AjaxRequestTarget ajax)
 			{
-				newItem.add(new AttributeAppender("style", "display:none;", ";")
+				newItem.add(new AttributeAppender("style", Model.of("display:none;"), ";")
 				{
 					@Override
 					public boolean isTemporary(Component component)
