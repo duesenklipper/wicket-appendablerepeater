@@ -6,7 +6,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,6 +16,9 @@
  */
 package de.wicketbuch.extensions.appendablerepeater.listview;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.markup.MarkupStream;
 import org.apache.wicket.markup.html.IHeaderResponse;
@@ -24,9 +27,6 @@ import org.apache.wicket.markup.html.list.ListView;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.request.resource.PackageResourceReference;
 import org.apache.wicket.request.resource.ResourceReference;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A {@link ListView} implementation that can dynamically append items via AJAX, without repainting the entire list. It
@@ -41,8 +41,9 @@ import java.util.List;
  */
 public abstract class AppendableListView<T> extends ListView<T>
 {
-	private static final ResourceReference SCRIPT = new PackageResourceReference(AppendableListView.class,
-		"AppendableListView.js");
+	public static final ResourceReference SCRIPT = new PackageResourceReference
+		(AppendableListView.class,
+			"AppendableListView.js");
 
 	// a reference to the last rendered child. This is used to get the markupId of the element after which the new
 	// one should be rendered.
