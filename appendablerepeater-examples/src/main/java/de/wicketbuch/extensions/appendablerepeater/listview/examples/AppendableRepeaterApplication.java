@@ -29,4 +29,11 @@ public class AppendableRepeaterApplication extends WebApplication
 	{
 		return HomePage.class;
 	}
+
+	@Override
+	protected void init()
+	{
+		super.init();
+		getMarkupSettings().setAutomaticLinking(true);
+	}
 }
