@@ -1,5 +1,6 @@
 package de.wicketbuch.extensions.appendablerepeater.gridview;
 
+import static de.wicketbuch.extensions.appendablerepeater.listview.AppendableListView.SCRIPT;
 import static sun.swing.MenuItemLayoutHelper.max;
 
 import java.util.ArrayList;
@@ -9,18 +10,25 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.markup.MarkupStream;
+import org.apache.wicket.markup.html.IHeaderContributor;
+import org.apache.wicket.markup.html.IHeaderResponse;
 import org.apache.wicket.markup.repeater.Item;
 import org.apache.wicket.markup.repeater.data.GridView;
 import org.apache.wicket.markup.repeater.data.IDataProvider;
 import org.apache.wicket.model.IModel;
 
-public abstract class AppendableGridView<T> extends GridView<T>
+public abstract class AppendableGridView<T> extends GridView<T> implements
+		IHeaderContributor
 {
 
-	private SortedMap<Integer, AppendableItem> renderedEmptyItems;
+	private final SortedMap<Integer, AppendableItem> renderedEmptyItems = new
+			TreeMap<>();
+	private List<AppendableRowItem> newlyAddedRows;
 	private int lastItemCount = 0;
 	private int lastRenderedIndex;
-	private AppendableRowItem lastRenderedRow;
+	private String rowTagName;
+	private String lastRowId;
 
 	public AppendableGridView(String id, IDataProvider dataProvider)
 	{
@@ -38,11 +46,19 @@ public abstract class AppendableGridView<T> extends GridView<T>
 	protected void onBeforeRender()
 	{
 		super.onBeforeRender();
-		if (renderedEmptyItems != null)
-		{
-			renderedEmptyItems.clear();
-		}
+		renderedEmptyItems.clear();
 		lastRenderedIndex = 0;
+		if (newlyAddedRows != null)
+		{
+			AjaxRequestTarget ajax = AjaxRequestTarget.get();
+			if (ajax != null)
+			{
+				for (AppendableRowItem newlyAddedRow : newlyAddedRows)
+				{
+					onAppendRow(newlyAddedRow, ajax);
+				}
+			}
+		}
 	}
 
 	@Override
@@ -66,57 +82,106 @@ public abstract class AppendableGridView<T> extends GridView<T>
 	public boolean itemsAppended(AjaxRequestTarget ajax)
 	{
 		final int lastPage = getPageCount() - 1;
-		if (getCurrentPage() == lastPage)
+		final int newItemCount = internalGetItemCount();
+		int unrenderedItemCount = newItemCount - lastItemCount;
+		final int itemsPerPage = getRows() * getColumns();
+		if (unrenderedItemCount > 0)
 		{
-			// not on the last page -> just go to last page
-			ajax.addComponent(getParent());
-			setCurrentPage(lastPage);
-			return false;
-		}
-		else
-		{
-			final int newItemCount = getItemCount();
-			final int unrenderedItemCount = newItemCount - lastItemCount;
-			final int itemsPerPage = getRows() * getColumns();
-			if (unrenderedItemCount > 0)
+			final int firstPageWithNewItems =
+					lastItemCount / itemsPerPage;
+			if (getCurrentPage() != firstPageWithNewItems || lastItemCount == 0)
 			{
-				final int itemCountOnLastPage = lastItemCount % itemsPerPage;
-				int availableSlots = itemsPerPage - itemCountOnLastPage;
-				final Iterator<AppendableItem> emptyItemsToReplace = renderedEmptyItems.values().iterator();
-				final Iterator<IModel<T>> unrenderedItemModels = getItemModels(lastItemCount, unrenderedItemCount);
-				int index = lastRenderedIndex;
-				while (availableSlots > 0 && emptyItemsToReplace.hasNext() && unrenderedItemModels.hasNext())
-				{
-					final AppendableItem emptyItem = emptyItemsToReplace.next();
-					final IModel<T> model = unrenderedItemModels.next();
-					final AppendableItem newItem = newItem(emptyItem.getId(), index, model);
-					emptyItem.replaceWith(newItem);
-					ajax.addComponent(newItem);
-					itemAppended(newItem, ajax);
-					availableSlots--;
-					index++;
-				}
-				final List<AppendableItem> newItems = new ArrayList<AppendableItem>();
-
-				while (unrenderedItemModels.hasNext() && availableSlots > 0)
-				{
-					IModel<T> model = unrenderedItemModels.next();
-					final AppendableItem newItem = newItem(newChildId(), index, model);
-					newItems.add(newItem);
-					itemAppended(newItem, ajax);
-				}
-
-
-				return true;
+				// not on the first page that contains new items -> just go to
+				// that page
+				ajax.addComponent(getParent());
+				setCurrentPage(firstPageWithNewItems);
+				return false;
 			}
 			else
 			{
-				return false;
+				final int itemCountOnLastPage =
+						lastItemCount % itemsPerPage;
+				final int lastRowCount = lastItemCount / getColumns();
+				final int rowCountOnLastPage = lastRowCount % getRows();
+				final int unusedRowsOnLastPage = getRows() -
+						rowCountOnLastPage;
+				int availableSlots = itemsPerPage - itemCountOnLastPage;
+				final Iterator<AppendableItem> emptyItemsToReplace =
+						renderedEmptyItems.values().iterator();
+				final Iterator<IModel<T>> unrenderedItemModels =
+						getItemModels(lastItemCount, unrenderedItemCount);
+				int newlyRenderedItemCount = 0;
+				int index = lastRenderedIndex;
+				while (availableSlots > 0 &&
+						unrenderedItemModels.hasNext() && emptyItemsToReplace
+						.hasNext())
+				{
+					// first fill in the empty cells that were left after
+					// the last rendering
+					final IModel<T> model = unrenderedItemModels.next();
+					final AppendableItem emptyItem =
+							emptyItemsToReplace.next();
+					emptyItemsToReplace.remove();
+					final AppendableItem newItem =
+							newItem(emptyItem.getId(), index, model);
+					populateItem(newItem);
+					emptyItem.replaceWith(newItem);
+					ajax.addComponent(newItem);
+					onAppendItem(newItem, ajax);
+					availableSlots--;
+					index++;
+					newlyRenderedItemCount++;
+					unrenderedItemCount--;
+					lastRowId = newItem.findParent(AppendableRowItem.class)
+					                   .getMarkupId();
+				}
+				if (availableSlots > 0 && unrenderedItemModels.hasNext() &&
+						unusedRowsOnLastPage > 0)
+				{
+					// there are items left to render, but now we need to
+					// create new rows
+					final Iterator<IModel<T>> remainingItemModels =
+							getItemModels(lastItemCount + newlyRenderedItemCount,
+									availableSlots);
+					Iterator<Item<T>> newItems =
+							getItemReuseStrategy().getItems(newItemFactory(),
+									remainingItemModels,
+									getItems());
+					addItems(newItems);
+					for (AppendableRowItem newlyAddedRow : newlyAddedRows)
+					{
+						if (rowTagName == null)
+						{
+							rowTagName = newlyAddedRow
+									.getItemTagName();
+						}
+						ajax.prependJavascript(String.format(
+								"AppendableListView.appendAfter('%s', '%s', '%s');",
+								lastRowId, newlyAddedRow
+										.getMarkupId(), rowTagName));
+						ajax.addComponent(newlyAddedRow);
+						onAppendRow(newlyAddedRow, ajax);
+						lastRowId = newlyAddedRow.getMarkupId();
+					}
+				}
 			}
+			lastItemCount = newItemCount;
+			newlyAddedRows = null;
+			return true;
+		}
+		else
+		{
+			return false;
 		}
 	}
 
-	protected void itemAppended(AppendableItem item, AjaxRequestTarget ajax)
+	protected void onAppendRow(AppendableRowItem row, AjaxRequestTarget
+			ajax)
+	{
+
+	}
+
+	protected void onAppendItem(AppendableItem item, AjaxRequestTarget ajax)
 	{
 
 	}
@@ -126,8 +191,15 @@ public abstract class AppendableGridView<T> extends GridView<T>
 	{
 		super.onAfterRender();
 		this.lastItemCount = getItemCount();
+		this.newlyAddedRows = null;
 	}
 
+
+	@Override
+	public void renderHead(IHeaderResponse response)
+	{
+		response.renderJavascriptReference(SCRIPT);
+	}
 	/**
 	 * Created by calle on 24.06.16.
 	 */
@@ -150,10 +222,6 @@ public abstract class AppendableGridView<T> extends GridView<T>
 			super.onAfterRender();
 			if (this.getModel() == null)
 			{
-				if (renderedEmptyItems == null)
-				{
-					renderedEmptyItems = new TreeMap<>();
-				}
 				renderedEmptyItems.put(this.getIndex(), this);
 			}
 			else
@@ -168,13 +236,31 @@ public abstract class AppendableGridView<T> extends GridView<T>
 		public AppendableRowItem(String id, int index)
 		{
 			super(id, index);
+			setOutputMarkupId(true);
 		}
 
 		@Override
-		protected void onRender()
+		protected void onRender(MarkupStream ms)
 		{
-			super.onRender();
-			AppendableGridView.this.lastRenderedRow = this;
+			super.onRender(ms);
+			lastRowId = this.getMarkupId();
+		}
+
+		public String getItemTagName()
+		{
+			final MarkupStream markupStream = this.locateMarkupStream();
+			return markupStream.getTag().getName();
+		}
+
+		@Override
+		protected void onInitialize()
+		{
+			super.onInitialize();
+			if (newlyAddedRows == null)
+			{
+				newlyAddedRows = new ArrayList<>();
+			}
+			newlyAddedRows.add(this);
 		}
 	}
 }
