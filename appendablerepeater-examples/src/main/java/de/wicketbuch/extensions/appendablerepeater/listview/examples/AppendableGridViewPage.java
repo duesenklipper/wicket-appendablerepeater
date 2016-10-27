@@ -25,9 +25,12 @@ import de.wicketbuch.extensions.appendablerepeater.gridview.AppendableGridView;
 import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
+import org.apache.wicket.ajax.markup.html.navigation.paging.AjaxPagingNavigator;
 import org.apache.wicket.behavior.AttributeAppender;
+import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.markup.html.basic.Label;
+import org.apache.wicket.markup.html.link.Link;
 import org.apache.wicket.markup.repeater.Item;
 import org.apache.wicket.markup.repeater.data.IDataProvider;
 import org.apache.wicket.model.IModel;
@@ -44,45 +47,110 @@ public class AppendableGridViewPage extends WebPage
 	{
 		final List<Integer> list = new ArrayList<>();
 		list.addAll(Arrays.asList(1, 2, 3));
+		WebMarkupContainer container = new WebMarkupContainer
+				("container");
+		container.setOutputMarkupId(true);
+		add(container);
 		final AppendableGridView<Integer> appendableGridView = new
-				AppendableGridView<Integer>("grid", new
-						IDataProvider<Integer>()
-						{
-							@Override
-							public Iterator iterator(long first, long count)
-							{
-								int toIndex = (int) (first + count);
-								if (toIndex < 0 || toIndex >= list.size()) {
-									toIndex = list.size();
-								}
-								return list.subList((int) first,
-										toIndex
-								).iterator();
-							}
-
-							@Override
-							public long size()
-							{
-								return list.size();
-							}
-
-							@Override
-							public IModel model(Integer object)
-							{
-								return Model.of(object);
-							}
-
-							@Override
-							public void detach()
-							{
-
-							}
-						})
+				AppendableGridView<Integer>("grid", new ListDataProvider(list))
 				{
 					@Override
 					protected void populateEmptyItem(Item<Integer> item)
 					{
-						item.add(new Label("value", ""));
+						item.add(new Label("value", "-"));
+					}
+
+					@Override
+					protected void populateItem(Item<Integer> item)
+					{
+						item.add(new Label("value", item.getModel()));
+					}
+
+					@Override
+					protected void onAppendItem(AppendableItem item,
+					                            AjaxRequestTarget ajax)
+					{
+						item.add(new AttributeAppender("style", "display:none;",
+								";")
+						{
+							@Override
+							public boolean isTemporary(Component component)
+							{
+								return true;
+							}
+						});
+						ajax.appendJavaScript(
+								String.format("$('#%s').fadeIn();",
+										item.getMarkupId()));
+					}
+
+					@Override
+					protected void onAppendRow(AppendableRowItem row,
+					                           AjaxRequestTarget ajax)
+					{
+						row.add(new AttributeAppender("style", "display:none;",
+								";")
+						{
+							@Override
+							public boolean isTemporary(Component component)
+							{
+								return true;
+							}
+						});
+						ajax.appendJavaScript(
+								String.format("$('#%s').fadeIn();",
+										row.getMarkupId()));
+					}
+
+					@Override
+					protected void onPageChangeAfterAppend(AjaxRequestTarget ajax)
+					{
+						ajax.add(AppendableGridViewPage.this.getPage().get
+								("pager"));
+					}
+				};
+		appendableGridView.setColumns(5);
+		appendableGridView.setRows(3);
+		container.add(appendableGridView);
+		final AjaxPagingNavigator pager =
+				new AjaxPagingNavigator("pager", appendableGridView);
+		pager.setOutputMarkupId(true);
+		add(pager);
+		add(new AjaxLink<Void>("append")
+		{
+			@Override
+			public void onClick(AjaxRequestTarget ajax)
+			{
+				list.add(counter++);
+				appendableGridView.itemsAppended(ajax);
+			}
+		});
+		add(new AjaxLink<Void>("appendMultiple")
+		{
+			@Override
+			public void onClick(AjaxRequestTarget ajax)
+			{
+				list.add(counter++);
+				list.add(counter++);
+				list.add(counter++);
+				appendableGridView.itemsAppended(ajax);
+			}
+		});
+
+		// container is needed to have a parent around the initially empty repeater so it can be repainted
+		WebMarkupContainer containerEmpty = new WebMarkupContainer
+				("containerEmpty");
+		containerEmpty.setOutputMarkupId(true);
+		add(containerEmpty);
+		final List<Integer> list2 = new ArrayList<>();
+		final AppendableGridView<Integer> appendableGridViewEmpty = new
+				AppendableGridView<Integer>("gridEmpty", new ListDataProvider
+						(list2))
+				{
+					@Override
+					protected void populateEmptyItem(Item<Integer> item)
+					{
+						item.add(new Label("value", "-"));
 					}
 
 					@Override
@@ -127,90 +195,75 @@ public class AppendableGridViewPage extends WebPage
 										row.getMarkupId()));
 					}
 				};
-		appendableGridView.setColumns(5);
-		add(appendableGridView);
-		add(new AjaxLink<Void>("append")
+		appendableGridViewEmpty.setColumns(5);
+		containerEmpty.add(appendableGridViewEmpty);
+		add(new AjaxLink<Void>("appendEmptySingle")
 		{
 			@Override
 			public void onClick(AjaxRequestTarget ajax)
 			{
-				list.add(counter++);
-				appendableGridView.itemsAppended(ajax);
+				list2.add(counter++);
+				appendableGridViewEmpty.itemsAppended(ajax);
 			}
 		});
-		add(new AjaxLink<Void>("appendMultiple")
+		add(new AjaxLink<Void>("appendEmptyMultiple")
 		{
 			@Override
 			public void onClick(AjaxRequestTarget ajax)
 			{
-				list.add(counter++);
-				list.add(counter++);
-				list.add(counter++);
-				appendableGridView.itemsAppended(ajax);
+				list2.add(counter++);
+				list2.add(counter++);
+				list2.add(counter++);
+				appendableGridViewEmpty.itemsAppended(ajax);
 			}
 		});
-
-		// container is needed to have a parent around the initially empty repeater so it can be repainted
-//		WebMarkupContainer container = new WebMarkupContainer("container");
-//		container.setOutputMarkupId(true);
-//		add(container);
-//		final AppendableListView<Integer> appendableListViewEmpty = new AppendableListView<Integer>("repeaterEmpty", new ArrayList<Integer>())
-//		{
-//			@Override
-//			protected void populateItem(final AppendableListItem item)
-//			{
-//				item.add(new Label("index", item.getModelObject()));
-//				item.add(new Label("timestamp", new AbstractReadOnlyModel<String>()
-//				{
-//					@Override
-//					public String getObject()
-//					{
-//						return DateFormat.getTimeInstance(DateFormat.LONG).format(new Date());
-//					}
-//				}));
-//			}
-//
-//			@Override
-//			protected void onAppendItem(AppendableListItem newItem, AjaxRequestTarget ajax)
-//			{
-//				newItem.add(new AttributeAppender("style", "display:none;", ";")
-//				{
-//					@Override
-//					public boolean isTemporary(Component component)
-//					{
-//						return true;
-//					}
-//				});
-//				ajax.appendJavaScript(String.format("$('#%s').fadeIn();", newItem.getMarkupId()));
-//			}
-//		};
-//		container.add(appendableListViewEmpty);
-//		add(new AjaxLink<Void>("appendEmptySingle")
-//		{
-//			@Override
-//			public void onClick(AjaxRequestTarget ajax)
-//			{
-//				appendableListViewEmpty.appendNewItemFor(counter++, ajax);
-//			}
-//		});
-//		add(new AjaxLink<Void>("appendEmptyMultiple")
-//		{
-//			@Override
-//			public void onClick(AjaxRequestTarget ajax)
-//			{
-//				appendableListViewEmpty.appendNewItemFor(counter++, ajax);
-//				appendableListViewEmpty.appendNewItemFor(counter++, ajax);
-//				appendableListViewEmpty.appendNewItemFor(counter++, ajax);
-//			}
-//		});
-//		add(new Link<Void>("clear")
-//		{
-//			@Override
-//			public void onClick()
-//			{
-//				appendableListViewEmpty.getModelObject().clear();
-//			}
-//		});
+		add(new Link<Void>("clear")
+		{
+			@Override
+			public void onClick()
+			{
+				list2.clear();
+			}
+		});
 	}
 
+	private static class ListDataProvider implements IDataProvider<Integer>
+	{
+		private final List<Integer> list;
+
+		public ListDataProvider(List<Integer> list)
+		{
+			this.list = list;
+		}
+
+		@Override
+		public Iterator iterator(long first, long count)
+		{
+			int toIndex = (int) (first + count);
+			if (toIndex < 0 || toIndex >= list.size()) {
+				toIndex = list.size();
+			}
+			return list.subList((int) first,
+					toIndex
+			).iterator();
+		}
+
+		@Override
+		public long size()
+		{
+			return list.size();
+		}
+
+		@Override
+		public IModel model(Integer object)
+		{
+			return Model.of(object);
+		}
+
+		@Override
+		public void detach()
+		{
+
+		}
+	}
 }
