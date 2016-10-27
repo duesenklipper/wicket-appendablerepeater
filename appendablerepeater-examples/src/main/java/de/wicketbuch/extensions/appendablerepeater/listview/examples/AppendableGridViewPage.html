@@ -24,27 +24,43 @@
             <script src="jquery-1.12.3.js"></script>
         </wicket:link>
     </wicket:head>
+    <style type="text/css">
+        table {
+            border-collapse: separate;
+            border-spacing: 5px;
+        }
+
+        td {
+            padding: 5px;
+            background-color: #eeeeee;
+        }
+    </style>
 </head>
 <body>
-Add to non-empty list
-<table>
-    <tr wicket:id="grid">
-        <td wicket:id="cols">
-            Value: <span wicket:id="value"></span>
-        </td>
-    </tr>
-</table>
+Add to non-empty grid
+<div wicket:id="container">
+    <table>
+        <tr wicket:id="grid">
+            <td wicket:id="cols">
+                <span wicket:id="value"></span>
+            </td>
+        </tr>
+    </table>
+</div>
+<div wicket:id="pager"></div>
 <a href="" wicket:id="append">append</a><br/>
 <a href="" wicket:id="appendMultiple">append multiple</a><br/>
 <hr/>
-<!--Add to empty List
-<div wicket:id="container">
-    <ul>
-        <li wicket:id="repeaterEmpty">
-            <span wicket:id="index"></span> -
-            <span wicket:id="timestamp"></span>
-        </li>
-    </ul>
+
+Add to empty grid
+<div wicket:id="containerEmpty">
+    <table>
+        <tr wicket:id="gridEmpty">
+            <td wicket:id="cols">
+                <span wicket:id="value"></span>
+            </td>
+        </tr>
+    </table>
 </div>
 <a href="" wicket:id="appendEmptySingle">append</a><br/>
 <a href="" wicket:id="appendEmptyMultiple">append multiple</a><br/>
