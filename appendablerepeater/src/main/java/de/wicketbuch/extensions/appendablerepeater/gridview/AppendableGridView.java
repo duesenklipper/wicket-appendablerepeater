@@ -1,7 +1,6 @@
 package de.wicketbuch.extensions.appendablerepeater.gridview;
 
 import static de.wicketbuch.extensions.appendablerepeater.listview.AppendableListView.SCRIPT;
-import static sun.swing.MenuItemLayoutHelper.max;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -9,28 +8,108 @@ import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import de.wicketbuch.extensions.appendablerepeater.listview.AppendableListView;
+import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.markup.MarkupStream;
 import org.apache.wicket.markup.html.IHeaderContributor;
 import org.apache.wicket.markup.html.IHeaderResponse;
+import org.apache.wicket.markup.html.navigation.paging.PagingNavigator;
 import org.apache.wicket.markup.repeater.Item;
 import org.apache.wicket.markup.repeater.data.GridView;
 import org.apache.wicket.markup.repeater.data.IDataProvider;
 import org.apache.wicket.model.IModel;
 
+/**
+ * A {@link GridView} implementation that can dynamically append items via AJAX,
+ * without repainting the entire grid. It
+ * is very nearly a drop-in replacement for GridView, only the {@link Item}
+ * types have been narrowed to {@link AppendableItem} and
+ * {@link AppendableRowItem}.
+ * <p>
+ * {@code AppendableGridView} works differently from
+ * {@link AppendableListView} in that it does not have an append method that
+ * adds elements to the model. Instead, you append to your model manually and
+ * then call {@link #itemsAppended(AjaxRequestTarget)}. Newly added items
+ * will be added to the existing elements in the browser. If the current page
+ * is "full" and new items would be added to a different page, no new
+ * elements will be inserted on this page - instead, the {@code
+ * AppendableGridView} will jump to the first page with new elements.
+ * <p>
+ * To facilitate animations and other things, this class offers the following
+ * callbacks:
+ * <ul>
+ * <li>{@link #onAppendItem(AppendableItem, AjaxRequestTarget)} is
+ * called when a single item is appended, replacing an empty slot in an
+ * already existing row.
+ * </li>
+ * <li>{@link #onAppendRow(AppendableRowItem, AjaxRequestTarget)} is
+ * called when a new row is appended, containing at least one "filled"
+ * slot. onAppendItem will <em>not</em> be called for the elements in
+ * this row.</li>
+ * <li>
+ * {@link #onPageChangeAfterAppend(AjaxRequestTarget)} is called when
+ * no new elements are added on the current page but instead the page
+ * is changed to where new elements have appeared.
+ * </li>
+ * </ul>
+ *
+ * @param <T> The list element type
+ * @author Carl-Eric Menzel cmenzel@wicketbuch.de
+ */
 public abstract class AppendableGridView<T> extends GridView<T> implements
 		IHeaderContributor
 {
-
+	/**
+	 * Contains the empty items that were used to fill up non-complete rows
+	 * during the last render. These will be used to display new items in
+	 * {@link #itemsAppended(AjaxRequestTarget)}. The empty items are never
+	 * stale because they are recreated on each rendering.
+	 */
 	private final SortedMap<Integer, AppendableItem> renderedEmptyItems = new
 			TreeMap<>();
-	private List<AppendableRowItem> newlyAddedRows;
-	private int lastItemCount = 0;
-	private int lastRenderedIndex;
-	private String rowTagName;
-	private String lastRowId;
 
-	public AppendableGridView(String id, IDataProvider dataProvider)
+	/**
+	 * RowItems that are added (via {@link #add(Component...)}) are
+	 * registered here so they can be submitted to
+	 * {@link #onAppendRow(AppendableRowItem, AjaxRequestTarget)}. This list
+	 * is discarded after its contents were used.
+	 */
+	private List<AppendableRowItem> newlyAddedRows;
+
+	private List<AppendableItem> appendedItems;
+
+	/**
+	 * The number of items in the DataProvider after the last render. This is
+	 * used to determine the number of new items in
+	 * {@link #itemsAppended(AjaxRequestTarget)}.
+	 */
+	private int lastItemCount = 0;
+
+	/**
+	 * The tag used for the row items. This is lazily determined and then
+	 * cached.
+	 */
+	private String rowTagName;
+
+	/**
+	 * The markup id of the last row that was rendered. This used to figure
+	 * out the insertion point for ajax updates.
+	 */
+	private String lastRenderedRowMarkupId;
+
+	/**
+	 * This indicates whether we are currently in the process of appending
+	 * rows. If we are, then newly added rows are passed to
+	 * {@link #onAppendRow(AppendableRowItem, AjaxRequestTarget)} to let them
+	 * be animated. If not, we are in a normal page render or e.g. in a page
+	 * change (via {@link PagingNavigator}, for example) and newly added rows
+	 * are simply regenerated rows due to the item reuse strategy. They do
+	 * not need the animation callback then.
+	 */
+	private boolean appending = false;
+
+	public AppendableGridView(String id, IDataProvider<T> dataProvider)
 	{
 		super(id, dataProvider);
 	}
@@ -39,6 +118,9 @@ public abstract class AppendableGridView<T> extends GridView<T> implements
 	protected void onInitialize()
 	{
 		super.onInitialize();
+		// we will need the parent to re-render in case we are changing the
+		// current page or are appending to a previously empty grid, so we
+		// tell it to have a markup id.
 		getParent().setOutputMarkupId(true);
 	}
 
@@ -46,19 +128,28 @@ public abstract class AppendableGridView<T> extends GridView<T> implements
 	protected void onBeforeRender()
 	{
 		super.onBeforeRender();
+		// empty items from the laster render will be discarded anyway now, so
+		// we don't need to track them anymore
 		renderedEmptyItems.clear();
-		lastRenderedIndex = 0;
-		if (newlyAddedRows != null)
+
+		// we are interested in newly added rows only if we are currently
+		// appending. if we are not appending, rows were added in the normal
+		// process of rebuilding the repeater - so we do not need the
+		// appending animation.
+		if (appending && newlyAddedRows != null)
 		{
 			AjaxRequestTarget ajax = AjaxRequestTarget.get();
 			if (ajax != null)
 			{
+				// only animate if we are actually in an ajax request
 				for (AppendableRowItem newlyAddedRow : newlyAddedRows)
 				{
 					onAppendRow(newlyAddedRow, ajax);
 				}
 			}
 		}
+		// we are done with appending now
+		appending = false;
 	}
 
 	@Override
@@ -79,12 +170,21 @@ public abstract class AppendableGridView<T> extends GridView<T> implements
 		return new AppendableRowItem(id, index);
 	}
 
-	public boolean itemsAppended(AjaxRequestTarget ajax)
+	/**
+	 * Call this method after adding items to the {@code DataProvider} given to
+	 * this {@code AppendableGridView}. It will then appropriately insert the
+	 * new elements via ajax.
+	 * @param ajax the currently active {@link AjaxRequestTarget}
+	 */
+	public void itemsAppended(AjaxRequestTarget ajax)
 	{
-		final int lastPage = getPageCount() - 1;
+		// getItemCount may be cached, but we need an accurate count here,
+		// hence we use the internal count method
 		final int newItemCount = internalGetItemCount();
-		int unrenderedItemCount = newItemCount - lastItemCount;
+
 		final int itemsPerPage = getRows() * getColumns();
+		// only do anything if we actually have new items:
+		int unrenderedItemCount = newItemCount - lastItemCount;
 		if (unrenderedItemCount > 0)
 		{
 			final int firstPageWithNewItems =
@@ -94,8 +194,9 @@ public abstract class AppendableGridView<T> extends GridView<T> implements
 				// not on the first page that contains new items -> just go to
 				// that page
 				ajax.addComponent(getParent());
+				appending = true;
 				setCurrentPage(firstPageWithNewItems);
-				return false;
+				onPageChangeAfterAppend(ajax);
 			}
 			else
 			{
@@ -111,7 +212,7 @@ public abstract class AppendableGridView<T> extends GridView<T> implements
 				final Iterator<IModel<T>> unrenderedItemModels =
 						getItemModels(lastItemCount, unrenderedItemCount);
 				int newlyRenderedItemCount = 0;
-				int index = lastRenderedIndex;
+				int index = lastItemCount - 1;
 				while (availableSlots > 0 &&
 						unrenderedItemModels.hasNext() && emptyItemsToReplace
 						.hasNext())
@@ -132,8 +233,8 @@ public abstract class AppendableGridView<T> extends GridView<T> implements
 					index++;
 					newlyRenderedItemCount++;
 					unrenderedItemCount--;
-					lastRowId = newItem.findParent(AppendableRowItem.class)
-					                   .getMarkupId();
+					lastRenderedRowMarkupId = newItem.findParent(AppendableRowItem.class)
+					                                 .getMarkupId();
 				}
 				if (availableSlots > 0 && unrenderedItemModels.hasNext() &&
 						unusedRowsOnLastPage > 0)
@@ -141,7 +242,8 @@ public abstract class AppendableGridView<T> extends GridView<T> implements
 					// there are items left to render, but now we need to
 					// create new rows
 					final Iterator<IModel<T>> remainingItemModels =
-							getItemModels(lastItemCount + newlyRenderedItemCount,
+							getItemModels(
+									lastItemCount + newlyRenderedItemCount,
 									availableSlots);
 					Iterator<Item<T>> newItems =
 							getItemReuseStrategy().getItems(newItemFactory(),
@@ -157,22 +259,26 @@ public abstract class AppendableGridView<T> extends GridView<T> implements
 						}
 						ajax.prependJavascript(String.format(
 								"AppendableListView.appendAfter('%s', '%s', '%s');",
-								lastRowId, newlyAddedRow
+								lastRenderedRowMarkupId, newlyAddedRow
 										.getMarkupId(), rowTagName));
 						ajax.addComponent(newlyAddedRow);
 						onAppendRow(newlyAddedRow, ajax);
-						lastRowId = newlyAddedRow.getMarkupId();
+						lastRenderedRowMarkupId = newlyAddedRow.getMarkupId();
 					}
+				}
+				if (unrenderedItemCount > availableSlots)
+				{
+					onPageChangeAfterAppend(ajax);
 				}
 			}
 			lastItemCount = newItemCount;
 			newlyAddedRows = null;
-			return true;
 		}
-		else
-		{
-			return false;
-		}
+	}
+
+	protected void onPageChangeAfterAppend(AjaxRequestTarget ajax)
+	{
+
 	}
 
 	protected void onAppendRow(AppendableRowItem row, AjaxRequestTarget
@@ -200,18 +306,16 @@ public abstract class AppendableGridView<T> extends GridView<T> implements
 	{
 		response.renderJavascriptReference(SCRIPT);
 	}
-	/**
-	 * Created by calle on 24.06.16.
-	 */
+
 	protected class AppendableItem extends Item<T>
 	{
-		public AppendableItem(String id, int index, IModel<T> model)
+		protected AppendableItem(String id, int index, IModel<T> model)
 		{
 			super(id, index, model);
 			setOutputMarkupId(true);
 		}
 
-		public AppendableItem(String id, int index)
+		protected AppendableItem(String id, int index)
 		{
 			this(id, index, null);
 		}
@@ -224,16 +328,12 @@ public abstract class AppendableGridView<T> extends GridView<T> implements
 			{
 				renderedEmptyItems.put(this.getIndex(), this);
 			}
-			else
-			{
-				lastRenderedIndex = max(lastRenderedIndex, this.getIndex());
-			}
 		}
 	}
 
 	protected class AppendableRowItem extends Item<Object>
 	{
-		public AppendableRowItem(String id, int index)
+		protected AppendableRowItem(String id, int index)
 		{
 			super(id, index);
 			setOutputMarkupId(true);
@@ -243,10 +343,10 @@ public abstract class AppendableGridView<T> extends GridView<T> implements
 		protected void onRender(MarkupStream ms)
 		{
 			super.onRender(ms);
-			lastRowId = this.getMarkupId();
+			lastRenderedRowMarkupId = this.getMarkupId();
 		}
 
-		public String getItemTagName()
+		String getItemTagName()
 		{
 			final MarkupStream markupStream = this.locateMarkupStream();
 			return markupStream.getTag().getName();
