@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.wicketbuch.extensions.appendablerepeater.listview.examples;
+package de.wicketbuch.extensions.appendablerepeater.examples.listview;
 
 import java.text.DateFormat;
 import java.util.ArrayList;
