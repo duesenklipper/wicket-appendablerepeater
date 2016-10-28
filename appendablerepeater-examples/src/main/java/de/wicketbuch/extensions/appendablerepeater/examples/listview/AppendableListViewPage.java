@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.wicketbuch.extensions.appendablerepeater.listview.examples;
+package de.wicketbuch.extensions.appendablerepeater.examples.listview;
 
 import java.text.DateFormat;
 import java.util.ArrayList;
@@ -32,6 +32,7 @@ import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.link.Link;
 import org.apache.wicket.model.AbstractReadOnlyModel;
+import org.apache.wicket.model.Model;
 
 /**
  * Created by calle on 19/04/16.
@@ -49,7 +50,7 @@ public class AppendableListViewPage extends WebPage
 			@Override
 			protected void populateItem(final AppendableListItem item)
 			{
-				item.add(new Label("index", item.getModelObject()));
+				item.add(new Label("index", item.getModel()));
 				item.add(new Label("timestamp", new AbstractReadOnlyModel<String>()
 				{
 					@Override
@@ -63,7 +64,9 @@ public class AppendableListViewPage extends WebPage
 			@Override
 			protected void onAppendItem(AppendableListItem newItem, AjaxRequestTarget ajax)
 			{
-				newItem.add(new AttributeAppender("style", "display:none;", ";") {
+				newItem.add(new AttributeAppender("style",
+						Model.of("display:none;"), ";")
+				{
 					@Override
 					public boolean isTemporary(Component component)
 					{
@@ -102,7 +105,7 @@ public class AppendableListViewPage extends WebPage
 			@Override
 			protected void populateItem(final AppendableListItem item)
 			{
-				item.add(new Label("index", item.getModelObject()));
+				item.add(new Label("index", item.getModel()));
 				item.add(new Label("timestamp", new AbstractReadOnlyModel<String>()
 				{
 					@Override
@@ -116,7 +119,8 @@ public class AppendableListViewPage extends WebPage
 			@Override
 			protected void onAppendItem(AppendableListItem newItem, AjaxRequestTarget ajax)
 			{
-				newItem.add(new AttributeAppender("style", "display:none;", ";")
+				newItem.add(new AttributeAppender("style",
+						Model.of("display:none;"), ";")
 				{
 					@Override
 					public boolean isTemporary(Component component)

@@ -1,3 +1,19 @@
+/**
+ * Copyright (C) 2016 Carl-Eric Menzel <cmenzel@wicketbuch.de>
+ * and possibly other appendablerepeater contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package de.wicketbuch.extensions.appendablerepeater.gridview;
 
 import static de.wicketbuch.extensions.appendablerepeater.listview.AppendableListView.SCRIPT;
@@ -13,13 +29,11 @@ import org.apache.wicket.Component;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.markup.MarkupStream;
-import org.apache.wicket.markup.head.IHeaderResponse;
-import org.apache.wicket.markup.head.JavaScriptHeaderItem;
+import org.apache.wicket.markup.html.IHeaderResponse;
 import org.apache.wicket.markup.repeater.Item;
 import org.apache.wicket.markup.repeater.data.GridView;
 import org.apache.wicket.markup.repeater.data.IDataProvider;
 import org.apache.wicket.model.IModel;
-import org.apache.wicket.request.cycle.RequestCycle;
 
 /**
  * A {@link GridView} implementation that can dynamically append items via AJAX,
@@ -108,7 +122,7 @@ public abstract class AppendableGridView<T> extends GridView<T>
 	 * used to determine the number of new items in
 	 * {@link #itemsAppended(AjaxRequestTarget)}.
 	 */
-	private long lastItemCount = 0;
+	private int lastItemCount = 0;
 
 	/**
 	 * The tag used for the row items. This is lazily determined and then
@@ -151,8 +165,7 @@ public abstract class AppendableGridView<T> extends GridView<T>
 			// appending. if we are not appending, rows were added in the normal
 			// process of rebuilding the repeater - so we do not need the
 			// appending animation.
-			AjaxRequestTarget ajax =
-					RequestCycle.get().find(AjaxRequestTarget.class);
+			AjaxRequestTarget ajax = AjaxRequestTarget.get();
 			// only animate if we are actually in an ajax request
 			if (ajax != null)
 			{
@@ -214,19 +227,19 @@ public abstract class AppendableGridView<T> extends GridView<T>
 	{
 		// getItemCount may be cached, but we need an accurate count here,
 		// hence we use the internal count method
-		final long newItemCount = internalGetItemCount();
+		final int newItemCount = internalGetItemCount();
 
 		// only do anything if we actually have new items:
-		long unrenderedItemCount = newItemCount - lastItemCount;
+		int unrenderedItemCount = newItemCount - lastItemCount;
 		if (unrenderedItemCount > 0)
 		{
-			final long firstPageWithNewItems =
+			final int firstPageWithNewItems =
 					lastItemCount / getItemsPerPage();
-			final long itemCountOnLastPage =
+			final int itemCountOnLastPage =
 					lastItemCount % getItemsPerPage();
-			final long lastRowCount;
+			final int lastRowCount;
 			{
-				long rowCount = lastItemCount / getColumns();
+				int rowCount = lastItemCount / getColumns();
 				if (lastItemCount % getColumns() > 0)
 				{
 					// partial rows count too:
@@ -284,7 +297,7 @@ public abstract class AppendableGridView<T> extends GridView<T>
 				// let's add them here
 
 				// this many slots can receive new items
-				long availableSlotsInPage =
+				int availableSlotsInPage =
 						getItemsPerPage() - itemCountOnLastPage;
 
 				// partially-filled rows are filled with empty items. we can
@@ -446,7 +459,7 @@ public abstract class AppendableGridView<T> extends GridView<T>
 	public void renderHead(IHeaderResponse response)
 	{
 		super.renderHead(response);
-		response.render(JavaScriptHeaderItem.forReference(SCRIPT));
+		response.renderJavaScriptReference(SCRIPT);
 	}
 
 	protected class AppendableItem extends Item<T>
@@ -504,16 +517,6 @@ public abstract class AppendableGridView<T> extends GridView<T>
 					appendedItems.add(this);
 				}
 			}
-		}
-
-		@Override
-		protected void onReAdd()
-		{
-			// if items are re-used, they might be re-added after being
-			// removed, instead of being recreated. so we check onReAdd() as
-			// well as onInitialize().
-			super.onReAdd();
-			recordAppendedItemIfNecessary();
 		}
 	}
 
