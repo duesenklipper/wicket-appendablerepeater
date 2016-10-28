@@ -15,7 +15,6 @@ import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.markup.MarkupStream;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.head.JavaScriptHeaderItem;
-import org.apache.wicket.markup.html.navigation.paging.PagingNavigator;
 import org.apache.wicket.markup.repeater.Item;
 import org.apache.wicket.markup.repeater.data.GridView;
 import org.apache.wicket.markup.repeater.data.IDataProvider;
@@ -70,15 +69,39 @@ public abstract class AppendableGridView<T> extends GridView<T>
 	private final SortedMap<Integer, AppendableItem> renderedEmptyItems = new
 			TreeMap<>();
 
+	private boolean appending = false;
+
 	/**
 	 * RowItems that are added (via {@link #add(Component...)}) are
 	 * registered here so they can be submitted to
-	 * {@link #onAppendRow(AppendableRowItem, AjaxRequestTarget)}. This list
-	 * is discarded after its contents were used.
+	 * {@link #onAppendRow(AppendableRowItem, AjaxRequestTarget)}.
+	 * This list is discarded after its contents were used.
 	 */
-	private List<AppendableRowItem> newlyAddedRows;
+	private List<AppendableRowItem> appendedRows;
 
+	/**
+	 * Items that are generated during an append situation when we are moving to
+	 * a new page are registered here, so they can be submitted to {@link
+	 * #onAppendItem(AppendableItem, AjaxRequestTarget)}. This list is discarded
+	 * after its contents are used.
+	 */
 	private List<AppendableItem> appendedItems;
+
+	/**
+	 * When appending and moving to a new page, this counts how many rows had
+	 * been previously on the target page. These pre-existing rows do not need
+	 * to be animated, because we only want to animate new rows, so we use this
+	 * counter to skip them.
+	 */
+	private long preExistingRows = 0;
+
+	/**
+	 * When appending and moving to a new page, this counts how many items had
+	 * been previously in the last non-"full" row. These pre-existing items do
+	 * not need to be animated, because we only want to animate new items, so we
+	 * use this counter to skip them.
+	 */
+	private long preExistingItems = 0;
 
 	/**
 	 * The number of items in the DataProvider after the last render. This is
@@ -99,17 +122,6 @@ public abstract class AppendableGridView<T> extends GridView<T>
 	 */
 	private String lastRenderedRowMarkupId;
 
-	/**
-	 * This indicates whether we are currently in the process of appending
-	 * rows. If we are, then newly added rows are passed to
-	 * {@link #onAppendRow(AppendableRowItem, AjaxRequestTarget)} to let them
-	 * be animated. If not, we are in a normal page render or e.g. in a page
-	 * change (via {@link PagingNavigator}, for example) and newly added rows
-	 * are simply regenerated rows due to the item reuse strategy. They do
-	 * not need the animation callback then.
-	 */
-	private boolean appending = false;
-
 	public AppendableGridView(String id, IDataProvider<T> dataProvider)
 	{
 		super(id, dataProvider);
@@ -129,28 +141,47 @@ public abstract class AppendableGridView<T> extends GridView<T>
 	protected void onBeforeRender()
 	{
 		super.onBeforeRender();
-		// empty items from the laster render will be discarded anyway now, so
+		// empty items from the last render will be discarded anyway now, so
 		// we don't need to track them anymore
 		renderedEmptyItems.clear();
 
-		// we are interested in newly added rows only if we are currently
-		// appending. if we are not appending, rows were added in the normal
-		// process of rebuilding the repeater - so we do not need the
-		// appending animation.
-		if (appending && newlyAddedRows != null)
+		if (appending)
 		{
+			// we are interested in newly added rows only if we are currently
+			// appending. if we are not appending, rows were added in the normal
+			// process of rebuilding the repeater - so we do not need the
+			// appending animation.
 			AjaxRequestTarget ajax =
 					RequestCycle.get().find(AjaxRequestTarget.class);
+			// only animate if we are actually in an ajax request
 			if (ajax != null)
 			{
-				// only animate if we are actually in an ajax request
-				for (AppendableRowItem newlyAddedRow : newlyAddedRows)
+				// do we have new items that were placed in a pre-existing row?
+				if (appendedItems != null)
 				{
-					onAppendRow(newlyAddedRow, ajax);
+					// animate them individually
+					for (AppendableItem appendedItem : appendedItems)
+					{
+						onAppendItem(appendedItem, ajax);
+					}
+				}
+
+				// do we have new rows that were added?
+				if (appendedRows != null)
+				{
+					// animate them row by row
+					for (AppendableRowItem newlyAddedRow : appendedRows)
+					{
+						onAppendRow(newlyAddedRow, ajax);
+					}
 				}
 			}
 		}
-		// we are done with appending now
+		// we are done with appending now, reset the counters and buffers
+		preExistingItems = 0;
+		preExistingRows = 0;
+		appendedItems = null;
+		appendedRows = null;
 		appending = false;
 	}
 
@@ -176,6 +207,7 @@ public abstract class AppendableGridView<T> extends GridView<T>
 	 * Call this method after adding items to the {@code DataProvider} given to
 	 * this {@code AppendableGridView}. It will then appropriately insert the
 	 * new elements via ajax.
+	 *
 	 * @param ajax the currently active {@link AjaxRequestTarget}
 	 */
 	public void itemsAppended(AjaxRequestTarget ajax)
@@ -190,74 +222,149 @@ public abstract class AppendableGridView<T> extends GridView<T>
 		{
 			final long firstPageWithNewItems =
 					lastItemCount / getItemsPerPage();
+			final long itemCountOnLastPage =
+					lastItemCount % getItemsPerPage();
+			final long lastRowCount;
+			{
+				long rowCount = lastItemCount / getColumns();
+				if (lastItemCount % getColumns() > 0)
+				{
+					// partial rows count too:
+					rowCount += 1;
+				}
+				lastRowCount = rowCount;
+			}
+
+			// number of rows that are already present on the most recently
+			// rendered page
+			final long rowCountOnLastPage;
+			{
+				long count = lastRowCount % getRows();
+				if (count == 0 && lastItemCount > 0)
+				{
+					// no partially filled page means the last page was full
+					// of rows! unless there were no items at all, then there
+					// were no rows either, duh.
+					count = getRows();
+				}
+				rowCountOnLastPage = count;
+			}
+
+			// number of row slots on the most recent page that are not yet
+			// used
+			final long unusedRowsOnLastPage = getRows() -
+					rowCountOnLastPage;
+
 			if (getCurrentPage() != firstPageWithNewItems || lastItemCount == 0)
 			{
-				// not on the first page that contains new items -> just go to
-				// that page
-				ajax.add(getParent());
-				appending = true;
+				// we are not on the first page that contains new items
+				// -> just go to that page
 				setCurrentPage(firstPageWithNewItems);
+
+				appending = true;
+
+				// redraw from parent
+				ajax.add(getParent());
+
+				// this many rows are already on that page and thus do not
+				// need to be animated
+				this.preExistingRows = rowCountOnLastPage;
+
+				// this many items were in the last non-full page and thus do
+				// not need to be animated
+				this.preExistingItems = itemCountOnLastPage;
+
+				// let the world know we changed the current page so they can
+				// redraw any pager they might have
 				onPageChangeAfterAppend(ajax);
 			}
 			else
 			{
-				final long itemCountOnLastPage =
-						lastItemCount % getItemsPerPage();
-				final long lastRowCount = lastItemCount / getColumns();
-				final long rowCountOnLastPage = lastRowCount % getRows();
-				final long unusedRowsOnLastPage = getRows() -
-						rowCountOnLastPage;
-				long availableSlots = getItemsPerPage() - itemCountOnLastPage;
+				// we are indeed on the page that will show the new items, so
+				// let's add them here
+
+				// this many slots can receive new items
+				long availableSlotsInPage =
+						getItemsPerPage() - itemCountOnLastPage;
+
+				// partially-filled rows are filled with empty items. we can
+				// target them individually with regular Wicket ajax, no
+				// other javascript shenanigans are needed.
 				final Iterator<AppendableItem> emptyItemsToReplace =
 						renderedEmptyItems.values().iterator();
-				final Iterator<IModel<T>> unrenderedItemModels =
-						getItemModels(lastItemCount, unrenderedItemCount);
+
+				final int availableSlotsInLastRow = renderedEmptyItems.size();
+
 				int newlyRenderedItemCount = 0;
-				int index = (int) (lastItemCount - 1);
-				while (availableSlots > 0 &&
-						unrenderedItemModels.hasNext() && emptyItemsToReplace
-						.hasNext())
+				if (availableSlotsInLastRow > 0)
 				{
-					// first fill in the empty cells that were left after
-					// the last rendering
-					final IModel<T> model = unrenderedItemModels.next();
-					final AppendableItem emptyItem =
-							emptyItemsToReplace.next();
-					emptyItemsToReplace.remove();
-					final AppendableItem newItem =
-							newItem(emptyItem.getId(), index, model);
-					populateItem(newItem);
-					emptyItem.replaceWith(newItem);
-					ajax.add(newItem);
-					onAppendItem(newItem, ajax);
-					availableSlots--;
-					index++;
-					newlyRenderedItemCount++;
-					unrenderedItemCount--;
-					lastRenderedRowMarkupId = newItem.findParent(AppendableRowItem.class)
-					                                 .getMarkupId();
+					// create the models for the new items, but only as many as
+					// we need for the last partially-filled row
+					final Iterator<IModel<T>> unrenderedItemModels =
+							getItemModels(lastItemCount,
+									availableSlotsInLastRow);
+
+					int index = (int) (lastItemCount - 1);
+
+					// first fill in the empty cells that were left after the
+					// last rendering
+					while (availableSlotsInPage > 0 &&
+							unrenderedItemModels.hasNext() &&
+							emptyItemsToReplace
+									.hasNext())
+					{
+						final IModel<T> model = unrenderedItemModels.next();
+						final AppendableItem emptyItem =
+								emptyItemsToReplace.next();
+						emptyItemsToReplace.remove();
+						final AppendableItem newItem =
+								newItem(emptyItem.getId(), index, model);
+						populateItem(newItem);
+						emptyItem.replaceWith(newItem);
+						ajax.add(newItem);
+						onAppendItem(newItem, ajax);
+						availableSlotsInPage--;
+						index++;
+						newlyRenderedItemCount++;
+						unrenderedItemCount--;
+						lastRenderedRowMarkupId =
+								newItem.findParent(AppendableRowItem.class)
+								       .getMarkupId();
+					}
 				}
-				if (availableSlots > 0 && unrenderedItemModels.hasNext() &&
+
+				if (availableSlotsInPage > 0 && unrenderedItemCount > 0 &&
 						unusedRowsOnLastPage > 0)
 				{
 					// there are items left to render, but now we need to
 					// create new rows
-					final Iterator<IModel<T>> remainingItemModels =
+					final Iterator<IModel<T>> unrenderedItemModels =
 							getItemModels(
 									lastItemCount + newlyRenderedItemCount,
-									availableSlots);
+									availableSlotsInPage);
+
+					// we will use GridView's addItems for this, which wants
+					// an iterator containing the actual items, so we let the
+					// ReuseStrategy build that for us
 					Iterator<Item<T>> newItems =
 							getItemReuseStrategy().getItems(newItemFactory(),
-									remainingItemModels,
+									unrenderedItemModels,
 									getItems());
 					addItems(newItems);
-					for (AppendableRowItem newlyAddedRow : newlyAddedRows)
+
+					for (AppendableRowItem newlyAddedRow : appendedRows)
 					{
 						if (rowTagName == null)
 						{
 							rowTagName = newlyAddedRow
 									.getItemTagName();
 						}
+						// each row that wasn't there before needs to have an
+						// element with its id inserted into the DOM, so that
+						// wicket-ajax has a target to replace. since this is
+						// the same that AppendableListView does we simply
+						// re-use its javascript function here. see
+						// AppendableListView for details.
 						ajax.prependJavaScript(String.format(
 								"AppendableListView.appendAfter('%s', '%s', '%s');",
 								lastRenderedRowMarkupId, newlyAddedRow
@@ -267,13 +374,17 @@ public abstract class AppendableGridView<T> extends GridView<T>
 						lastRenderedRowMarkupId = newlyAddedRow.getMarkupId();
 					}
 				}
-				if (unrenderedItemCount > availableSlots)
+				if (unrenderedItemCount > availableSlotsInPage)
 				{
+					// we have added items on the current page, but there are
+					// enough items to flow over to a new page, so we tell
+					// the outside world to refresh its pagers if it has any.
 					onPageChangeAfterAppend(ajax);
 				}
 			}
 			lastItemCount = newItemCount;
-			newlyAddedRows = null;
+			appendedRows = null;
+			appendedItems = null;
 		}
 	}
 
@@ -301,11 +412,23 @@ public abstract class AppendableGridView<T> extends GridView<T>
 		{
 			if (AppendableRowItem.class.isAssignableFrom(child.getClass()))
 			{
-				if (newlyAddedRows == null)
+				// we only want to animate completely new rows. GridView adds
+				// rows in on-screen order, so to skip the ones that were
+				// already seen we can simply count down preExistingRows.
+				if (preExistingRows > 0)
 				{
-					newlyAddedRows = new ArrayList<>();
+					preExistingRows--;
 				}
-				newlyAddedRows.add((AppendableRowItem) child);
+				else
+				{
+					// rows that are really new will be recorded in-order so
+					// that onBeforeRender can animate them.
+					if (appendedRows == null)
+					{
+						appendedRows = new ArrayList<>();
+					}
+					appendedRows.add((AppendableRowItem) child);
+				}
 			}
 		}
 		return super.add(children);
@@ -316,7 +439,7 @@ public abstract class AppendableGridView<T> extends GridView<T>
 	{
 		super.onAfterRender();
 		this.lastItemCount = getItemCount();
-		this.newlyAddedRows = null;
+		this.appendedRows = null;
 	}
 
 	@Override
@@ -328,12 +451,14 @@ public abstract class AppendableGridView<T> extends GridView<T>
 
 	protected class AppendableItem extends Item<T>
 	{
+		@SuppressWarnings("WeakerAccess")
 		protected AppendableItem(String id, int index, IModel<T> model)
 		{
 			super(id, index, model);
 			setOutputMarkupId(true);
 		}
 
+		@SuppressWarnings("WeakerAccess")
 		protected AppendableItem(String id, int index)
 		{
 			this(id, index, null);
@@ -345,13 +470,56 @@ public abstract class AppendableGridView<T> extends GridView<T>
 			super.onAfterRender();
 			if (this.getModel() == null)
 			{
+				// this is an empty item used to fill up the empty slots in a
+				// non-full row. we record these items here so we can later
+				// easily replace them via ajax.
 				renderedEmptyItems.put(this.getIndex(), this);
 			}
+		}
+
+		@Override
+		protected void onInitialize()
+		{
+			super.onInitialize();
+			recordAppendedItemIfNecessary();
+		}
+
+		private void recordAppendedItemIfNecessary()
+		{
+			if (this.getModel() != null)
+			{
+				// same as with rows (see AppendableGridView#add(Component))
+				// we want to only animate those items whose models were just
+				// added. so we skip the first n of them.
+				if (preExistingItems > 0)
+				{
+					preExistingItems--;
+				}
+				else
+				{
+					if (appendedItems == null)
+					{
+						appendedItems = new ArrayList<>();
+					}
+					appendedItems.add(this);
+				}
+			}
+		}
+
+		@Override
+		protected void onReAdd()
+		{
+			// if items are re-used, they might be re-added after being
+			// removed, instead of being recreated. so we check onReAdd() as
+			// well as onInitialize().
+			super.onReAdd();
+			recordAppendedItemIfNecessary();
 		}
 	}
 
 	protected class AppendableRowItem extends Item<Object>
 	{
+		@SuppressWarnings("WeakerAccess")
 		protected AppendableRowItem(String id, int index)
 		{
 			super(id, index);
