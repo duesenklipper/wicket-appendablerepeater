@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.wicketbuch.extensions.appendablerepeater.listview;
+package de.wicketbuch.extensions.appendablerepeater;
 
 import java.util.ArrayList;
 import java.util.List;

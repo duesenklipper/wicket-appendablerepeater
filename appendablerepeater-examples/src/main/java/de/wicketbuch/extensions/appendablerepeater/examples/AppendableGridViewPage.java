@@ -14,14 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.wicketbuch.extensions.appendablerepeater.examples.gridview;
+package de.wicketbuch.extensions.appendablerepeater.examples;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-import de.wicketbuch.extensions.appendablerepeater.gridview.AppendableGridView;
+import de.wicketbuch.extensions.appendablerepeater.AppendableGridView;
 import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
@@ -36,9 +36,6 @@ import org.apache.wicket.markup.repeater.data.IDataProvider;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
 
-/**
- * Created by calle on 19/04/16.
- */
 public class AppendableGridViewPage extends WebPage
 {
 	private int counter = 4;
