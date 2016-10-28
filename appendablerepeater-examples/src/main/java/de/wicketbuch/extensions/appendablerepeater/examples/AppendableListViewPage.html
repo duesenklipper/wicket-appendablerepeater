@@ -17,16 +17,29 @@
     limitations under the License.
 
 -->
-<html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:wicket="http://wicket.apache.org">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:wicket="http://wicket.apache.org">
 <body>
+Add to non-empty list
+<ul>
+    <li wicket:id="repeater">
+        <span wicket:id="index"></span> -
+        <span wicket:id="timestamp"></span>
+    </li>
+</ul>
+<a href="" wicket:id="append">append</a><br/>
+<a href="" wicket:id="appendMultiple">append multiple</a><br/>
+<hr/>
+Add to empty List
+<div wicket:id="container">
     <ul>
-        <li>
-            <a href="AppendableListViewPage.html">AppendableListView</a>
-        </li>
-        <li>
-            <a href="AppendableGridViewPage.html">AppendableGridView</a>
+        <li wicket:id="repeaterEmpty">
+            <span wicket:id="index"></span> -
+            <span wicket:id="timestamp"></span>
         </li>
     </ul>
+</div>
+<a href="" wicket:id="appendEmptySingle">append</a><br/>
+<a href="" wicket:id="appendEmptyMultiple">append multiple</a><br/>
+<a href="" wicket:id="clear">clear</a><br/>
 </body>
 </html>
