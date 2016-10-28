@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.wicketbuch.extensions.appendablerepeater.gridview;
+package de.wicketbuch.extensions.appendablerepeater;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -61,9 +61,9 @@ public class AppendableGridViewTest
 		WicketTester tester = newTester();
 		tester.startPage(new TestPage(2));
 		tester.clickLink("append", true);
+		tester.dumpPage();
 		tester.assertContains(
-						"<span wicket:id=\"label\" " +
-								"wicketpath=\"container_underTest_1_cols_4_label\">test_2</span>");
+						"<span wicketpath=\"container_underTest_1_cols_4_label\">test_2</span>");
 		tester.assertContainsNot("test_1");
 	}
 

@@ -14,9 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.wicketbuch.extensions.appendablerepeater.gridview;
+package de.wicketbuch.extensions.appendablerepeater;
 
-import static de.wicketbuch.extensions.appendablerepeater.listview.AppendableListView.SCRIPT;
+
+import static de.wicketbuch.extensions.appendablerepeater.AppendableListView.SCRIPT;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -24,7 +25,6 @@ import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import de.wicketbuch.extensions.appendablerepeater.listview.AppendableListView;
 import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.markup.MarkupStream;

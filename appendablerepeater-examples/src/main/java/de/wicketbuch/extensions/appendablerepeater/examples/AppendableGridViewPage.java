@@ -14,14 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.wicketbuch.extensions.appendablerepeater.examples.gridview;
+package de.wicketbuch.extensions.appendablerepeater.examples;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-import de.wicketbuch.extensions.appendablerepeater.gridview.AppendableGridView;
+import de.wicketbuch.extensions.appendablerepeater.AppendableGridView;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.ajax.markup.html.navigation.paging.AjaxPagingNavigator;
