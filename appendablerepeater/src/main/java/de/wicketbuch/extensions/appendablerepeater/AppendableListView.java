@@ -42,8 +42,9 @@ import org.apache.wicket.model.IModel;
  */
 public abstract class AppendableListView<T> extends ListView<T> implements IHeaderContributor
 {
-	private static final ResourceReference SCRIPT = new PackageResourceReference(AppendableListView.class,
-		"AppendableListView.js");
+	public static final ResourceReference SCRIPT = new PackageResourceReference
+		(AppendableListView.class,
+			"AppendableListView.js");
 
 	// a reference to the last rendered child. This is used to get the markupId of the element after which the new
 	// one should be rendered.

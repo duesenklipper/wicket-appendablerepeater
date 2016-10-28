@@ -27,9 +27,6 @@ import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.util.tester.WicketTester;
 import org.junit.Test;
 
-/**
- * Created by calle on 30/04/16.
- */
 public class AppendableListViewTest
 {
 	@Test
