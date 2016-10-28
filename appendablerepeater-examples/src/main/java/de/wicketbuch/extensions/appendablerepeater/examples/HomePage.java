@@ -14,26 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.wicketbuch.extensions.appendablerepeater.listview.examples;
+package de.wicketbuch.extensions.appendablerepeater.examples;
 
-import org.apache.wicket.Page;
-import org.apache.wicket.protocol.http.WebApplication;
+import org.apache.wicket.markup.html.WebPage;
 
 /**
- * Created by calle on 19/04/16.
+ * Created by calle on 26.10.16.
  */
-public class AppendableRepeaterApplication extends WebApplication
+public class HomePage extends WebPage
 {
-	@Override
-	public Class<? extends Page> getHomePage()
-	{
-		return HomePage.class;
-	}
-
-	@Override
-	protected void init()
-	{
-		super.init();
-		getMarkupSettings().setAutomaticLinking(true);
-	}
 }
