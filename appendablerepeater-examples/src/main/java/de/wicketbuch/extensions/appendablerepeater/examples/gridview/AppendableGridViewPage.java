@@ -6,7 +6,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.wicketbuch.extensions.appendablerepeater.listview.examples;
+package de.wicketbuch.extensions.appendablerepeater.examples.gridview;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -66,7 +66,7 @@ public class AppendableGridViewPage extends WebPage
 					protected void onAppendItem(AppendableItem item,
 					                            AjaxRequestTarget ajax)
 					{
-						item.add(new AttributeAppender("style", Model.of(Model.of("display:none;")),
+						item.add(new AttributeAppender("style", Model.of("display:none;"),
 								";")
 						{
 							@Override
@@ -84,7 +84,7 @@ public class AppendableGridViewPage extends WebPage
 					protected void onAppendRow(AppendableRowItem row,
 					                           AjaxRequestTarget ajax)
 					{
-						row.add(new AttributeAppender("style", Model.of(Model.of("display:none;")),
+						row.add(new AttributeAppender("style", Model.of("display:none;"),
 								";")
 						{
 							@Override
