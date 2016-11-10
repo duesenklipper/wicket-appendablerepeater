@@ -1,4 +1,4 @@
-**Current version**: 1.3.0.wicket{4|5|6|7} for Wicket 1.4.x, 1.5.x, 6.x, 7.x
+**Current version**: 1.4.0.wicket{4|5|6|7} for Wicket 1.4.x, 1.5.x, 6.x, 7.x
 
 **New:** `AppendableGridView`, see below.
 
@@ -41,12 +41,14 @@ small library. So far, it contains:
   gives you callbacks to animate the transition, see the JavaDoc and the 
   examples for more.
   
+  It only supports adding items at the end, not arbitrary insertion.
+  
 ## Maven coordinates
 
     <dependency>
         <groupId>de.wicketbuch.extensions</groupId>
         <artifactId>appendablerepeater</artifactId>
-        <version>1.3.0.wicket7</version>
+        <version>1.4.0.wicket7</version>
     </dependency>
 
 Make sure you choose the correct version for the version of Wicket you are
