@@ -31,6 +31,7 @@ import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.markup.MarkupStream;
 import org.apache.wicket.markup.head.IHeaderResponse;
 import org.apache.wicket.markup.head.JavaScriptHeaderItem;
+import org.apache.wicket.markup.repeater.IItemFactory;
 import org.apache.wicket.markup.repeater.Item;
 import org.apache.wicket.markup.repeater.data.GridView;
 import org.apache.wicket.markup.repeater.data.IDataProvider;
@@ -85,6 +86,9 @@ public abstract class AppendableGridView<T> extends GridView<T>
 	private final SortedMap<Integer, AppendableItem> renderedEmptyItems = new
 			TreeMap<>();
 
+	/**
+	 * @see #onBeforeRender()
+	 */
 	private boolean appending = false;
 
 	/**
@@ -138,6 +142,16 @@ public abstract class AppendableGridView<T> extends GridView<T>
 	 */
 	private String lastRenderedRowMarkupId;
 
+	/**
+	 * When rendering partially (such as when appending items, or when
+	 * jumping to a new page within the grid), GridView restarts the item
+	 * index at 0, which is not useful. We track the next index to use here.
+	 * It is set in {@link #onBeforeRender()} when rendering the entire
+	 * current page, and in {@link #itemsAppended(AjaxRequestTarget)} for
+	 * AJAX appends.
+	 */
+	private int nextIndex;
+
 	public AppendableGridView(String id, IDataProvider<T> dataProvider)
 	{
 		super(id, dataProvider);
@@ -156,13 +170,31 @@ public abstract class AppendableGridView<T> extends GridView<T>
 	@Override
 	protected void onBeforeRender()
 	{
+		// this is a full re-render. let's figure out the first displayed index
+		// so everything can be numbered correctly.
+		// this needs to happen before super.onBeforeRender, so the items
+		// created by super can get the correct index.
+		this.nextIndex = (int) (getCurrentPage() * getItemsPerPage());
+		if (nextIndex < 0)
+		{
+			// overflowing to more than maxint elements? we're in trouble
+			// anyway.
+			nextIndex = 0;
+		}
+
+		// let super create all the needed items.
 		super.onBeforeRender();
+
 		// empty items from the last render will be discarded anyway now, so
 		// we don't need to track them anymore
 		renderedEmptyItems.clear();
 
 		if (appending)
 		{
+			// this.appending is true when #itemsAppended was running and
+			// decided that we need to jump to a different page within the
+			// grid. so we are rendering the entire gridview, but some of the
+			// items are newly appended.
 			// we are interested in newly added rows only if we are currently
 			// appending. if we are not appending, rows were added in the normal
 			// process of rebuilding the repeater - so we do not need the
@@ -201,6 +233,13 @@ public abstract class AppendableGridView<T> extends GridView<T>
 		appending = false;
 	}
 
+	/**
+	 * Create an empty item. You won't normally need to override this.
+	 * <strong>Warning:</strong> Due to superclass limitations, the index
+	 * parameter will be out-of-sync with other elements. Do not rely on it.
+	 * The index for non-empty items ({@link #newItem(String, int, IModel)})
+	 * will be correct, however.
+	 */
 	@Override
 	protected AppendableItem newEmptyItem(String id, int index)
 	{
@@ -213,10 +252,37 @@ public abstract class AppendableGridView<T> extends GridView<T>
 		return new AppendableItem(id, index, model);
 	}
 
+	/**
+	 * Create a new RowItem. You won't normally need to override this.
+	 * <strong>Warning:</strong> Due to superclass limitations, the index
+	 * parameter will be potentially out-of-order, e.g. restarting at 0. Do
+	 * not rely on it.
+	 */
 	@Override
 	protected AppendableRowItem newRowItem(String id, int index)
 	{
 		return new AppendableRowItem(id, index);
+	}
+
+
+	@Override
+	protected IItemFactory<T> newItemFactory()
+	{
+		return new IItemFactory<T>()
+		{
+			@Override
+			public Item<T> newItem(int index, IModel<T> model)
+			{
+				String id = AppendableGridView.this.newChildId();
+				Item<T> item = AppendableGridView.this.newItem(id,
+						AppendableGridView.this.nextIndex, model);
+				AppendableGridView.this.nextIndex += 1;
+				AppendableGridView.this.populateItem(item);
+
+				return item;
+			}
+		};
+
 	}
 
 	/**
@@ -320,7 +386,7 @@ public abstract class AppendableGridView<T> extends GridView<T>
 							getItemModels(lastItemCount,
 									availableSlotsInLastRow);
 
-					int index = (int) (lastItemCount - 1);
+					nextIndex = (int) (lastItemCount);
 
 					// first fill in the empty cells that were left after the
 					// last rendering
@@ -334,13 +400,13 @@ public abstract class AppendableGridView<T> extends GridView<T>
 								emptyItemsToReplace.next();
 						emptyItemsToReplace.remove();
 						final AppendableItem newItem =
-								newItem(emptyItem.getId(), index, model);
+								newItem(emptyItem.getId(), nextIndex, model);
 						populateItem(newItem);
 						emptyItem.replaceWith(newItem);
 						ajax.add(newItem);
 						onAppendItem(newItem, ajax);
 						availableSlotsInPage--;
-						index++;
+						nextIndex++;
 						newlyRenderedItemCount++;
 						unrenderedItemCount--;
 						lastRenderedRowMarkupId =

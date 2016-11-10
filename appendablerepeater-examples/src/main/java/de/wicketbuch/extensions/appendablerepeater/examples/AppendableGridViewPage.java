@@ -35,6 +35,7 @@ import org.apache.wicket.markup.repeater.Item;
 import org.apache.wicket.markup.repeater.data.IDataProvider;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
+import org.apache.wicket.model.PropertyModel;
 
 public class AppendableGridViewPage extends WebPage
 {
@@ -55,12 +56,16 @@ public class AppendableGridViewPage extends WebPage
 					protected void populateEmptyItem(Item<Integer> item)
 					{
 						item.add(new Label("value", "-"));
+						item.add(new Label("index", new PropertyModel<>
+								(item, "index")));
 					}
 
 					@Override
 					protected void populateItem(Item<Integer> item)
 					{
 						item.add(new Label("value", item.getModel()));
+						item.add(new Label("index", new PropertyModel<>
+								(item, "index")));
 					}
 
 					@Override
@@ -148,12 +153,16 @@ public class AppendableGridViewPage extends WebPage
 					protected void populateEmptyItem(Item<Integer> item)
 					{
 						item.add(new Label("value", "-"));
+						item.add(new Label("index", new PropertyModel<>
+								(item, "index")));
 					}
 
 					@Override
 					protected void populateItem(Item<Integer> item)
 					{
 						item.add(new Label("value", item.getModel()));
+						item.add(new Label("index", new PropertyModel<>
+								(item, "index")));
 					}
 
 					@Override
