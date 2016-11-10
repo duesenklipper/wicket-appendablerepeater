@@ -199,6 +199,16 @@ public class AppendableGridViewTest
 				.getCurrentPage());
 	}
 
+	@Test
+	public void itemIndexContinuesCorrectly() throws Exception
+	{
+		final WicketTester tester = newTester();
+		tester.startPage(new TestPage(1));
+		tester.assertContains("index_0");
+		tester.clickLink("append3", true);
+		tester.assertContains("index_1.*index_2.*index_3");
+	}
+
 	private WicketTester newTester()
 	{
 		final WicketTester tester = new WicketTester();
@@ -229,6 +239,7 @@ public class AppendableGridViewTest
 						protected void populateEmptyItem(Item<Integer> item)
 						{
 							item.add(new Label("label", "empty"));
+							item.add(new Label("index", ""));
 						}
 
 						@Override
@@ -236,6 +247,8 @@ public class AppendableGridViewTest
 						{
 							item.add(new Label("label",
 									"test_" + item.getModelObject()));
+							item.add(new Label("index", "index_" + item
+									.getIndex()));
 						}
 
 						@Override
