@@ -378,6 +378,7 @@ public abstract class AppendableGridView<T> extends GridView<T>
 				final int availableSlotsInLastRow = renderedEmptyItems.size();
 
 				int newlyRenderedItemCount = 0;
+				nextIndex = (int) (lastItemCount);
 				if (availableSlotsInLastRow > 0)
 				{
 					// create the models for the new items, but only as many as
@@ -386,7 +387,6 @@ public abstract class AppendableGridView<T> extends GridView<T>
 							getItemModels(lastItemCount,
 									availableSlotsInLastRow);
 
-					nextIndex = (int) (lastItemCount);
 
 					// first fill in the empty cells that were left after the
 					// last rendering
