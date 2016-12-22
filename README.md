@@ -1,6 +1,6 @@
-**Current version**: 1.4.0.wicket{4|5|6|7} for Wicket 1.4.x, 1.5.x, 6.x, 7.x
+**Current version**: 1.4.1.wicket{4|5|6|7} for Wicket 1.4.x, 1.5.x, 6.x, 7.x
 
-**New:** `AppendableGridView`, see below.
+**New:** Bugfix for `AppendableGridView`.
 
 # Appendable Repeaters for Wicket
 
