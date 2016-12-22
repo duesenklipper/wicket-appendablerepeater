@@ -31,8 +31,10 @@ import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.markup.html.basic.Label;
+import org.apache.wicket.markup.html.link.Link;
 import org.apache.wicket.markup.html.navigation.paging.PagingNavigator;
 import org.apache.wicket.markup.repeater.Item;
+import org.apache.wicket.markup.repeater.ReuseIfModelsEqualStrategy;
 import org.apache.wicket.markup.repeater.data.IDataProvider;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
@@ -188,6 +190,31 @@ public class AppendableGridViewTest
 		tester.assertContains("index_1.*index_2.*index_3");
 	}
 
+	@Test
+	public void itemIndexContinuesCorrectly_Reuse_github_issue_1() throws
+			Exception
+	{
+		// when reusing items, appending directly into a new row (no empty
+		// slots left in the last rendered row) after a non-ajax render
+		// messed  up the index prior to fixing issue #1
+		final WicketTester tester = newTester();
+		// fill the first row using ajax
+		tester.startPage(new TestPage_Reuse(1));
+		tester.assertContains("index_0");
+		tester.clickLink("append", true);
+		tester.assertContains("index_1");
+		tester.clickLink("append", true);
+		tester.assertContains("index_2");
+		// render without ajax
+		tester.clickLink("reload", false);
+		tester.assertContains
+				("index_0.*index_1.*index_2");
+		// append into the next row, should keep counting index up
+		tester.clickLink("append3", true);
+		tester.assertContains
+				("index_3.*index_4.*index_5");
+	}
+
 	private WicketTester newTester()
 	{
 		final WicketTester tester = new WicketTester();
@@ -196,8 +223,17 @@ public class AppendableGridViewTest
 		return tester;
 	}
 
+	public class TestPage_Reuse extends TestPage {
+		public TestPage_Reuse(int initial) {
+			super(initial);
+			underTest.setItemReuseStrategy(
+					ReuseIfModelsEqualStrategy.getInstance());
+		}
+	}
+
 	public class TestPage extends WebPage
 	{
+		final AppendableGridView<Integer> underTest;
 		private int counter = 0;
 
 		public TestPage(int initial)
@@ -211,7 +247,7 @@ public class AppendableGridViewTest
 			add(container);
 			IDataProvider<Integer>
 					dataProvider = new ListDataProvider(list);
-			final AppendableGridView<Integer> underTest = new
+			underTest = new
 					AppendableGridView<Integer>("underTest", dataProvider)
 					{
 						@Override
@@ -273,6 +309,13 @@ public class AppendableGridViewTest
 					list.add(counter++);
 					list.add(counter++);
 					underTest.itemsAppended(ajax);
+				}
+			});
+			add(new Link<Void>("reload") {
+				@Override
+				public void onClick()
+				{
+					// NOP, just re-render
 				}
 			});
 		}
