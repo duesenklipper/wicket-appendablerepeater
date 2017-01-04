@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2016 Carl-Eric Menzel <cmenzel@wicketbuch.de>
+ * Copyright (C) 2016-17 Carl-Eric Menzel <cmenzel@wicketbuch.de>
  * and possibly other appendablerepeater contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,10 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.wicketbuch.extensions.appendablerepeater;
+package de.wicketbuch.extensions.appendablerepeaterOld;
 
 
-import static de.wicketbuch.extensions.appendablerepeater.AppendableListView.SCRIPT;
+import static de.wicketbuch.extensions.appendablerepeaterOld.AppendableListView.SCRIPT;
 
 import java.util.ArrayList;
 import java.util.Iterator;

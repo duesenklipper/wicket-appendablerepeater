@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (C) 2016 Carl-Eric Menzel <cmenzel@wicketbuch.de>
+    Copyright (C) 2016-17 Carl-Eric Menzel <cmenzel@wicketbuch.de>
     and possibly other appendablerepeater contributors.
 
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,16 +17,16 @@
     limitations under the License.
 
 -->
-<html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:wicket="http://wicket.apache.org">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:wicket="http://wicket.apache.org">
 <body>
-    <ul>
-        <li>
-            <a href="AppendableListViewPage.html">AppendableListView</a>
-        </li>
-        <li>
-            <a href="AppendableGridViewPage.html">AppendableGridView</a>
-        </li>
-    </ul>
+<ul>
+    <li wicket:id="listview">
+        <span wicket:id="index"></span>
+        <span wicket:id="content"></span>
+        <a href="" wicket:id="setfeedbackandjump"></a>
+    </li>
+</ul>
+<div wicket:id="feedback"></div>
+<a wicket:id="nextpage"></a>
 </body>
 </html>

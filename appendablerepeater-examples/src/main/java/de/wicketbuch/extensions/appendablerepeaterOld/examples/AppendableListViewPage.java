@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2016 Carl-Eric Menzel <cmenzel@wicketbuch.de>
+ * Copyright (C) 2016-17 Carl-Eric Menzel <cmenzel@wicketbuch.de>
  * and possibly other appendablerepeater contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.wicketbuch.extensions.appendablerepeater.examples;
+package de.wicketbuch.extensions.appendablerepeaterOld.examples;
 
 import java.text.DateFormat;
 import java.util.ArrayList;
@@ -22,7 +22,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-import de.wicketbuch.extensions.appendablerepeater.AppendableListView;
+import de.wicketbuch.extensions.appendablerepeaterOld.AppendableListView;
 import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
