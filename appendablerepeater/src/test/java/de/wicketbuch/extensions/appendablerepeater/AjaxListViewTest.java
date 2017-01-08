@@ -29,9 +29,6 @@ import org.apache.wicket.model.util.ListModel;
 import org.apache.wicket.util.tester.WicketTester;
 import org.junit.Test;
 
-/**
- * Created by calle on 1/4/17.
- */
 public class AjaxListViewTest
 {
 	public static class TestPageBasic extends WebPage

@@ -22,6 +22,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import org.apache.wicket.IGenericComponent;
+import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.navigation.paging.IPageableItems;
 import org.apache.wicket.markup.repeater.RepeatingView;
@@ -32,6 +33,7 @@ public abstract class AjaxListView<T> extends RepeatingView implements IGenericC
 	private long currentPage;
 	private long itemsPerPage;
 	private SortedMap<Integer, AjaxListItem> cachedItems;
+	private AjaxListItem lastItem;
 
 	public AjaxListView(String id)
 	{
@@ -52,6 +54,13 @@ public abstract class AjaxListView<T> extends RepeatingView implements IGenericC
 	{
 		super(id, model);
 		this.itemsPerPage = itemsPerPage;
+	}
+
+	@Override
+	protected void onInitialize()
+	{
+		super.onInitialize();
+		getParent().setOutputMarkupId(true);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -108,24 +117,23 @@ public abstract class AjaxListView<T> extends RepeatingView implements IGenericC
 				end = (int) e;
 			}
 		}
-		for (int index = start; index < end; index++)
+		AjaxListItem previousItem = null;
+		if (isReuseItems() && start > 0)
 		{
-			final AjaxListItem item;
-			if (isReuseItems() && cachedItems.containsKey(index))
+			for (int index = start - 1; index >= 0; index--)
 			{
-				item = cachedItems.get(index);
-			}
-			else
-			{
-				ListItemModel model = newModel(index);
-				item = newItem(newChildId(), model);
-				populateItem(item);
-				if (isReuseItems())
+				previousItem = cachedItems.get(index);
+				if (previousItem != null)
 				{
-					cachedItems.put(index, item);
+					break;
 				}
 			}
+		}
+		for (int index = start; index < end; index++)
+		{
+			final AjaxListItem item = getItemAt(index, previousItem);
 			add(item);
+			previousItem = item;
 		}
 	}
 
@@ -140,6 +148,25 @@ public abstract class AjaxListView<T> extends RepeatingView implements IGenericC
 	}
 
 	protected abstract void populateItem(AjaxListItem item);
+
+	public void itemsAppended(AjaxRequestTarget ajax)
+	{
+	}
+
+	public void itemsInsertedAt(int insertIndex, int count, AjaxRequestTarget ajax)
+	{
+		if (isReuseItems())
+		{
+			AjaxListItem item = lastItem;
+			while (item != null && both in well, item.getIndex() >= insertIndex)
+			{
+				cachedItems.remove(item.getIndex());
+				item.getModel().setIndex(item.getIndex() + count);
+				cachedItems.put(item.getIndex(), item);
+				item = item.previousItem;
+			}
+		}
+	}
 
 	protected class ListItemModel implements IModel<T>
 	{
@@ -180,12 +207,40 @@ public abstract class AjaxListView<T> extends RepeatingView implements IGenericC
 		}
 	}
 
+	private AjaxListItem getItemAt(int index, AjaxListItem previousItem)
+	{
+		final AjaxListItem item;
+		if (isReuseItems() && cachedItems.containsKey(index))
+		{
+			item = cachedItems.get(index);
+		}
+		else
+		{
+			ListItemModel model = newModel(index);
+			item = newItem(newChildId(), model);
+			populateItem(item);
+			if (isReuseItems())
+			{
+				cachedItems.put(index, item);
+			}
+			if (lastItem == null || lastItem.getIndex() < index)
+			{
+				lastItem = item;
+			}
+		}
+		item.previousItem = previousItem;
+		return item;
+	}
+
 	protected class AjaxListItem extends WebMarkupContainer
 	{
+		AjaxListItem previousItem;
+		AjaxListItem nextItem;
 
 		public AjaxListItem(String id, ListItemModel model)
 		{
 			super(id, model);
+			setOutputMarkupId(true);
 		}
 
 		public ListItemModel getModel()
