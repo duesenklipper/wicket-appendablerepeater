@@ -89,9 +89,9 @@ public class AjaxListViewModifyingTest
 		tester.clickLink("insertmulti", false);
 		tester.assertContains(".*>0<.*>0<.*inserted" +
 				".*>1<.*>0<.*val0" +
-				".*>2<.*>1<.*inserted" +
+				".*>2<.*>2<.*inserted" +
 				".*>3<.*>1<.*val1" +
-				".*>4<.*>2<.*inserted" +
+				".*>4<.*>4<.*inserted" +
 				".*>5<.*>2<.*val2");
 	}
 

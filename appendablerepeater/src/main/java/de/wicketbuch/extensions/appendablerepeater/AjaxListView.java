@@ -158,7 +158,7 @@ public abstract class AjaxListView<T> extends RepeatingView implements IGenericC
 		if (isReuseItems())
 		{
 			AjaxListItem item = lastItem;
-			while (item != null && both in well, item.getIndex() >= insertIndex)
+			while (item != null && item.getIndex() >= insertIndex)
 			{
 				cachedItems.remove(item.getIndex());
 				item.getModel().setIndex(item.getIndex() + count);
