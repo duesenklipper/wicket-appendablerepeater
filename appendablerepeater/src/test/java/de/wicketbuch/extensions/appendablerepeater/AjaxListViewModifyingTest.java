@@ -29,6 +29,18 @@ public class AjaxListViewModifyingTest
 	}
 
 	@Test
+	public void appendWithAjaxRenders() throws Exception
+	{
+		final WicketTester tester = new WicketTester();
+		tester.startPage(TestPage.class);
+		tester.assertContains(".*>0<.*>0<.*val0" +
+				".*>1<.*>1<.*val1" +
+				".*>2<.*>2<.*val2");
+		tester.clickLink("append", true);
+		tester.assertContains(".*>3<.*>3<.*appended");
+	}
+
+	@Test
 	public void appendWithoutAjaxRendersWithReuse() throws Exception
 	{
 		final WicketTester tester = new WicketTester();

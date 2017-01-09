@@ -32,6 +32,7 @@ public abstract class AjaxListView<T> extends RepeatingView implements IGenericC
 {
 	private long currentPage;
 	private long itemsPerPage;
+	private long lastItemCount = 0;
 	private SortedMap<Integer, AjaxListItem> cachedItems;
 	private AjaxListItem lastItem;
 
@@ -151,6 +152,17 @@ public abstract class AjaxListView<T> extends RepeatingView implements IGenericC
 
 	public void itemsAppended(AjaxRequestTarget ajax)
 	{
+		if (lastItemCount == 0)
+		{
+			// nothing rendered yet, nowhere to insert/append, just re-render
+			// from parent
+			ajax.add(getParent());
+		}
+		long appendedCount = getItemCount() - lastItemCount;
+		if (appendedCount > 0)
+		{
+
+		}
 	}
 
 	public void itemsInsertedAt(int insertIndex, int count, AjaxRequestTarget ajax)
@@ -261,6 +273,12 @@ public abstract class AjaxListView<T> extends RepeatingView implements IGenericC
 		public int getIndex()
 		{
 			return getModel().getIndex();
+		}
+
+		@Override
+		protected void onAfterRender()
+		{
+			lastItemCount = getItemCount();
 		}
 	}
 
