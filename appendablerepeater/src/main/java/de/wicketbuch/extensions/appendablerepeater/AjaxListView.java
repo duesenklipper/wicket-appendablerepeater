@@ -16,11 +16,15 @@
  */
 package de.wicketbuch.extensions.appendablerepeater;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import org.apache.wicket.Component;
 import org.apache.wicket.IGenericComponent;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.markup.html.WebMarkupContainer;
@@ -35,6 +39,7 @@ public abstract class AjaxListView<T> extends RepeatingView implements IGenericC
 	private long lastItemCount = 0;
 	private SortedMap<Integer, AjaxListItem> cachedItems;
 	private AjaxListItem lastItem;
+	private List<AjaxListItem> newItems;
 
 	public AjaxListView(String id)
 	{
@@ -152,31 +157,62 @@ public abstract class AjaxListView<T> extends RepeatingView implements IGenericC
 
 	public void itemsAppended(AjaxRequestTarget ajax)
 	{
-		if (lastItemCount == 0)
-		{
-			// nothing rendered yet, nowhere to insert/append, just re-render
-			// from parent
-			ajax.add(getParent());
-		}
 		long appendedCount = getItemCount() - lastItemCount;
 		if (appendedCount > 0)
 		{
-
 		}
 	}
 
 	public void itemsInsertedAt(int insertIndex, int count, AjaxRequestTarget ajax)
 	{
+		if (insertions == null)
+		{
+			insertions = new LinkedList<>();
+		}
+		insertions.add(new Insertion(insertIndex, count));
+		registerAjaxHook(ajax);
+		AjaxListItem item = lastItem;
+		AjaxListItem upperItem = null;
 		if (isReuseItems())
 		{
-			AjaxListItem item = lastItem;
 			while (item != null && item.getIndex() >= insertIndex)
 			{
 				cachedItems.remove(item.getIndex());
 				item.getModel().setIndex(item.getIndex() + count);
 				cachedItems.put(item.getIndex(), item);
+				upperItem = item;
 				item = item.previousItem;
 			}
+		}
+		AjaxListItem previousItem = item;
+		if (newItems == null)
+		{
+			newItems = new ArrayList<>();
+		}
+		for (int index = insertIndex; index < index + count; index++)
+		{
+			item = getItemAt(index, previousItem);
+			if (upperItem != null)
+			{
+				upperItem.previousItem = item;
+				upperItem = null;
+			}
+			newItems.add(item);
+		}
+	}
+
+	private void registerAjaxHook(AjaxRequestTarget ajax)
+	{
+		if (ajax != null)
+		{
+			ajax.addListener(new AjaxRequestTarget.AbstractListener()
+			{
+				@Override
+				public void onBeforeRespond(Map<String, Component> map, AjaxRequestTarget ajax)
+				{
+
+				}
+			});
 		}
 	}
 
@@ -278,7 +314,10 @@ public abstract class AjaxListView<T> extends RepeatingView implements IGenericC
 		@Override
 		protected void onAfterRender()
 		{
+			super.onAfterRender();
 			lastItemCount = getItemCount();
+			appendings = 0;
+			insertions = null;
 		}
 	}
 
@@ -347,5 +386,16 @@ public abstract class AjaxListView<T> extends RepeatingView implements IGenericC
 	public void setItemsPerPage(long itemsPerPage)
 	{
 		this.itemsPerPage = itemsPerPage;
+	}
+
+	private static class Insertion
+	{
+		final int index, count;
+
+		private Insertion(int index, int count)
+		{
+			this.index = index;
+			this.count = count;
+		}
 	}
 }
