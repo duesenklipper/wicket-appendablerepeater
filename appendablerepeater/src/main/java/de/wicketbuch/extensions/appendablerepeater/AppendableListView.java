@@ -18,7 +18,6 @@ package de.wicketbuch.extensions.appendablerepeater;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.markup.MarkupStream;
 import org.apache.wicket.markup.head.IHeaderResponse;
@@ -86,11 +85,8 @@ public abstract class AppendableListView<T> extends ListView<T>
 			// if this is an ajax request and we have newElements, that means it's a
 			// full repaint for this repeater and we should give these new elements
 			// the opportunity to be animated.
-			AjaxRequestTarget ajax = RequestCycle.get().find(AjaxRequestTarget.class);
-			if (ajax != null)
-			{
-				onAppendItem((AppendableListItem) item, ajax);
-			}
+			RequestCycle.get().find(AjaxRequestTarget.class).ifPresent(ajax -> onAppendItem(
+					(AppendableListItem) item, ajax));
 		}
 	}
 

@@ -24,7 +24,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
-
 import org.apache.wicket.Component;
 import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.ajax.AjaxRequestTarget;
@@ -199,31 +198,25 @@ public abstract class AppendableGridView<T> extends GridView<T>
 			// appending. if we are not appending, rows were added in the normal
 			// process of rebuilding the repeater - so we do not need the
 			// appending animation.
-			AjaxRequestTarget ajax =
-					RequestCycle.get().find(AjaxRequestTarget.class);
-			// only animate if we are actually in an ajax request
-			if (ajax != null)
-			{
-				// do we have new items that were placed in a pre-existing row?
-				if (appendedItems != null)
-				{
-					// animate them individually
-					for (AppendableItem appendedItem : appendedItems)
+			RequestCycle.get().find(AjaxRequestTarget.class)
+					.ifPresent(ajax -> // only animate if we are actually in an ajax request
 					{
-						onAppendItem(appendedItem, ajax);
-					}
-				}
+						// do we have new items that were placed in a pre-existing row?
+						if (appendedItems != null) {
+							// animate them individually
+							for (AppendableItem appendedItem : appendedItems) {
+								onAppendItem(appendedItem, ajax);
+							}
+						}
 
-				// do we have new rows that were added?
-				if (appendedRows != null)
-				{
-					// animate them row by row
-					for (AppendableRowItem newlyAddedRow : appendedRows)
-					{
-						onAppendRow(newlyAddedRow, ajax);
-					}
-				}
-			}
+						// do we have new rows that were added?
+						if (appendedRows != null) {
+							// animate them row by row
+							for (AppendableRowItem newlyAddedRow : appendedRows) {
+								onAppendRow(newlyAddedRow, ajax);
+							}
+						}
+					});
 		}
 		// we are done with appending now, reset the counters and buffers
 		preExistingItems = 0;
