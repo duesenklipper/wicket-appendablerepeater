@@ -92,26 +92,41 @@ public class AppendableListViewPage extends WebPage
 				appendableListView.appendNewItemFor(counter++, ajax);
 			}
 		});
+		add(new AjaxLink<Void>("removeFirst")
+		{
+			@Override
+			public void onClick(AjaxRequestTarget ajax)
+			{
+				final List<Integer> list = appendableListView.getModelObject();
+				if (!list.isEmpty())
+				{
+					appendableListView.removeItemFor(list.get(0),
+							ajax);
+				}
+			}
+		});
 
 		// container is needed to have a parent around the initially empty repeater so it can be repainted
 		WebMarkupContainer container = new WebMarkupContainer("container");
 		container.setOutputMarkupId(true);
 		add(container);
-		final AppendableListView<Integer> appendableListViewEmpty = new AppendableListView<Integer>("repeaterEmpty", new ArrayList<Integer>())
-		{
-			@Override
-			protected void populateItem(final AppendableListItem item)
-			{
-				item.add(new Label("index", item.getModelObject()));
-				item.add(new Label("timestamp", new AbstractReadOnlyModel<String>()
+		final AppendableListView<Integer> appendableListViewEmpty =
+				new AppendableListView<Integer>("repeaterEmpty", new ArrayList<Integer>())
 				{
 					@Override
-					public String getObject()
+					protected void populateItem(final AppendableListItem item)
 					{
-						return DateFormat.getTimeInstance(DateFormat.LONG).format(new Date());
+						item.add(new Label("index", item.getModelObject()));
+						item.add(new Label("timestamp", new AbstractReadOnlyModel<String>()
+						{
+							@Override
+							public String getObject()
+							{
+								return DateFormat.getTimeInstance(DateFormat.LONG)
+								                 .format(new Date());
+							}
+						}));
 					}
-				}));
-			}
 
 			@Override
 			protected void onAppendItem(AppendableListItem newItem, AjaxRequestTarget ajax)
