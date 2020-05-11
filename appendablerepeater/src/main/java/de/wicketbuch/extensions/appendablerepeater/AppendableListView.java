@@ -177,7 +177,7 @@ public abstract class AppendableListView<T> extends ListView<T>
 	/**
 	 * Remove an element from the underlying list and remove the corresponding ListItem and HTML. If
 	 * {@code ajax} is null, the element is removed and the changed ListView will be rendered
-	 * normally in the next response.
+	 * normally in the next response. If the given element is not found, this function does nothing.
 	 *
 	 * @param removeElement The element to remove
 	 * @param ajax          The AjaxRequestTarget
@@ -187,21 +187,20 @@ public abstract class AppendableListView<T> extends ListView<T>
 		if (ajax != null)
 		{
 			final Component[] last = new Component[2];
+			final boolean[] found = new boolean[1];
 			// This is a massive hack. We go through all ListItems until we find the one
 			// corresponding to the removed element. All ListItems from that one on are given the
 			// markup id of the next ListItem. The final ListItem is then removed.
 			visitChildren(AppendableListItem.class, new IVisitor<AppendableListItem, Void>()
 			{
-				boolean found = false;
-
 				@Override
 				public void component(AppendableListItem current, IVisit<Void> visit)
 				{
-					if (!found)
+					if (!found[0])
 					{
 						if (current.getModelObject().equals(removeElement))
 						{
-							found = true;
+							found[0] = true;
 							ajax.prependJavaScript(
 									String.format("AppendableListView.removeItem('%s');",
 											current.getMarkupId()));
@@ -216,9 +215,12 @@ public abstract class AppendableListView<T> extends ListView<T>
 					visit.dontGoDeeper();
 				}
 			});
-			remove(last[0]);
-			//noinspection unchecked
-			lastChild = ((AppendableListItem) last[1]);
+			if (found[0])
+			{
+				remove(last[0]);
+				//noinspection unchecked
+				lastChild = ((AppendableListItem) last[1]);
+			}
 		}
 		getModelObject().remove(removeElement);
 	}

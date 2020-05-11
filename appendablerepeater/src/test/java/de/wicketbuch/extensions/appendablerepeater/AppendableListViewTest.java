@@ -16,7 +16,10 @@
  */
 package de.wicketbuch.extensions.appendablerepeater;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
@@ -79,6 +82,16 @@ public class AppendableListViewTest
 		tester.assertContains("test_2");
 	}
 
+	@Test
+	public void doesNothingWhenRemovingNonexistentItem()
+	{
+		final WicketTester tester = new WicketTester();
+		tester.startPage(new TestPage(3));
+		tester.clickLink("removeNonexisting", true);
+		assertThat(tester.getLastResponseAsString(), is(equalTo(
+				"<?xml version=\"1.0\" encoding=\"UTF-8\"?><ajax-response></ajax-response>")));
+	}
+
 	public static class TestPage extends WebPage
 	{
 		private int counter = 0;
@@ -115,6 +128,14 @@ public class AppendableListViewTest
 				public void onClick(AjaxRequestTarget ajax)
 				{
 					underTest.removeItemFor(1, ajax);
+				}
+			});
+			add(new AjaxLink<Void>("removeNonexisting")
+			{
+				@Override
+				public void onClick(AjaxRequestTarget ajax)
+				{
+					underTest.removeItemFor(42, ajax);
 				}
 			});
 		}
