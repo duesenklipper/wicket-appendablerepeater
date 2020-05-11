@@ -1,6 +1,6 @@
-**Current version**: 1.4.1.wicket{4|5|6|7} for Wicket 1.4.x, 1.5.x, 6.x, 7.x
+**Current version**: 1.5.0.wicket{7|8} for Wicket 7.x, 8.x
 
-**New:** Bugfix for `AppendableGridView`.
+**New:** `AppendableListView` can now remove items.
 
 # Appendable Repeaters for Wicket
 
@@ -48,7 +48,7 @@ small library. So far, it contains:
     <dependency>
         <groupId>de.wicketbuch.extensions</groupId>
         <artifactId>appendablerepeater</artifactId>
-        <version>1.4.0.wicket7</version>
+        <version>1.5.0.wicket7</version>
     </dependency>
 
 Make sure you choose the correct version for the version of Wicket you are
