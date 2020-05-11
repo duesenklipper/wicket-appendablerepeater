@@ -28,7 +28,7 @@ var AppendableListView = {
 		var parentElement = existingElement.parentElement;
 		var newElement = AppendableListView.newElement(newId, tagName);
 		// IE up to 8 doesn't know lastElementChild :-(
- 		if (existingElement != parentElement.children[parentElement.children.length - 1]) { 
+		if (existingElement != parentElement.children[parentElement.children.length - 1]) {
 			existingElement = existingElement.nextElementSibling;
 			AppendableListView.insertBefore(existingElement.id, newId);
 		} else {
@@ -38,5 +38,11 @@ var AppendableListView = {
 
 	insertBefore: function (existingId, newId) {
 		var existingElement = document.getElementById(existingId);
+	},
+
+	removeItem: function (elementId) {
+		var elementToRemove = document.getElementById(elementId);
+		var parentElement = elementToRemove.parentElement;
+		parentElement.removeChild(elementToRemove);
 	}
 };
