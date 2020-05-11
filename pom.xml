@@ -124,7 +124,12 @@
                         <exclude>mvnw.cmd</exclude>
                         <exclude>.mvn/**</exclude>
                         <exclude>**/jetty/**</exclude>
+                        <exclude>LICENSE</exclude>
+                        <exclude>.java-version</exclude>
+                        <exclude>pom.xml.versionsBackup</exclude>
+                        <exclude>**/keystore</exclude>
                     </excludes>
+                    <failIfUnknown>true</failIfUnknown>
                 </configuration>
             </plugin>
         </plugins>
