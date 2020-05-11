@@ -19,6 +19,7 @@ package de.wicketbuch.extensions.appendablerepeater;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.markup.MarkupStream;
 import org.apache.wicket.markup.head.IHeaderResponse;
@@ -29,6 +30,8 @@ import org.apache.wicket.model.IModel;
 import org.apache.wicket.request.cycle.RequestCycle;
 import org.apache.wicket.request.resource.PackageResourceReference;
 import org.apache.wicket.request.resource.ResourceReference;
+import org.apache.wicket.util.visit.IVisit;
+import org.apache.wicket.util.visit.IVisitor;
 
 /**
  * A {@link ListView} implementation that can dynamically append items via AJAX, without repainting the entire list. It
@@ -43,9 +46,8 @@ import org.apache.wicket.request.resource.ResourceReference;
  */
 public abstract class AppendableListView<T> extends ListView<T>
 {
-	public static final ResourceReference SCRIPT = new PackageResourceReference
-		(AppendableListView.class,
-			"AppendableListView.js");
+	public static final ResourceReference SCRIPT =
+			new PackageResourceReference(AppendableListView.class, "AppendableListView.js");
 
 	// a reference to the last rendered child. This is used to get the markupId of the element after which the new
 	// one should be rendered.
@@ -152,7 +154,8 @@ public abstract class AppendableListView<T> extends ListView<T>
 			else
 			{
 				final int newIndex = getModel().getObject().size() - 1;
-				final AppendableListItem newItem = newItem(newIndex, getListItemModel(getModel(), newIndex));
+				final AppendableListItem newItem =
+						newItem(newIndex, getListItemModel(getModel(), newIndex));
 				add(newItem);
 				populateItem(newItem);
 				onAppendItem(newItem, ajax);
@@ -160,15 +163,66 @@ public abstract class AppendableListView<T> extends ListView<T>
 				{
 					itemTagName = newItem.getItemTagName();
 				}
-				ajax.prependJavaScript(String.format("AppendableListView.appendAfter('%s', '%s', '%s');", lastChild
-						.getMarkupId(), newItem
-						.getMarkupId(), itemTagName));
+				ajax.prependJavaScript(
+						String.format("AppendableListView.appendAfter('%s', '%s', '%s');", lastChild
+								.getMarkupId(), newItem
+								.getMarkupId(), itemTagName));
 				ajax.add(newItem);
 				lastChild = newItem;
 			}
 		}
 		return this;
 	}
+
+	/**
+	 * Remove an element from the underlying list and remove the corresponding ListItem and HTML. If
+	 * {@code ajax} is null, the element is removed and the changed ListView will be rendered
+	 * normally in the next response.
+	 *
+	 * @param removeElement The element to remove
+	 * @param ajax          The AjaxRequestTarget
+	 */
+	public void removeItemFor(final T removeElement, final AjaxRequestTarget ajax)
+	{
+		if (ajax != null)
+		{
+			final Component[] last = new Component[2];
+			// This is a massive hack. We go through all ListItems until we find the one
+			// corresponding to the removed element. All ListItems from that one on are given the
+			// markup id of the next ListItem. The final ListItem is then removed.
+			visitChildren(AppendableListItem.class, new IVisitor<AppendableListItem, Void>()
+			{
+				boolean found = false;
+
+				@Override
+				public void component(AppendableListItem current, IVisit<Void> visit)
+				{
+					if (!found)
+					{
+						if (current.getModelObject().equals(removeElement))
+						{
+							found = true;
+							ajax.prependJavaScript(
+									String.format("AppendableListView.removeItem('%s');",
+											current.getMarkupId()));
+						}
+					}
+					else
+					{
+						last[0].setMarkupId(current.getMarkupId());
+					}
+					last[1] = last[0];
+					last[0] = current;
+					visit.dontGoDeeper();
+				}
+			});
+			remove(last[0]);
+			//noinspection unchecked
+			lastChild = ((AppendableListItem) last[1]);
+		}
+		getModelObject().remove(removeElement);
+	}
+
 
 	/**
 	 * Perform any special actions that need to be done on a ListItem being appended in an AJAX call. This could be used
