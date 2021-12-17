@@ -30,7 +30,7 @@
     <parent>
         <groupId>de.duesenklipper.maven</groupId>
         <artifactId>duesenklipper-parent</artifactId>
-        <version>1.7</version>
+        <version>1.8.1.java8</version>
     </parent>
 
     <name>appendablerepeater-parent</name>
@@ -52,8 +52,6 @@
         </developer>
     </developers>
     <properties>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <maven.compiler.source>${maven.compiler.target}</maven.compiler.source>
         <main.basedir>${project.basedir}</main.basedir>
         <wicket.version>8.8.0</wicket.version>
         <jetty9.version>9.2.13.v20150730</jetty9.version>
