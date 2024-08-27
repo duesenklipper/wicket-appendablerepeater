@@ -24,13 +24,13 @@
 
     <groupId>de.wicketbuch.extensions</groupId>
     <artifactId>appendablerepeater-parent</artifactId>
-    <version>1.6.0.wicket8-SNAPSHOT</version>
+    <version>1.6.0.wicket9-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <parent>
         <groupId>de.duesenklipper.maven</groupId>
         <artifactId>duesenklipper-parent</artifactId>
-        <version>1.8.1.java8</version>
+        <version>1.9.1.java11</version>
     </parent>
 
     <name>appendablerepeater-parent</name>
@@ -53,10 +53,10 @@
     </developers>
     <properties>
         <main.basedir>${project.basedir}</main.basedir>
-        <wicket.version>8.13.0</wicket.version>
-        <jetty9.version>9.2.13.v20150730</jetty9.version>
+        <wicket.version>9.18.0</wicket.version>
         <slf4j.version>1.7.21</slf4j.version>
         <clirr.compare.version>1.2.5.wicket7</clirr.compare.version>
+        <jetty9.version>9.4.54.v20240208</jetty9.version>
     </properties>
 
     <modules>
@@ -90,9 +90,28 @@
             </dependency>
             <!--  JETTY DEPENDENCIES FOR TESTING  -->
             <dependency>
-                <groupId>org.eclipse.jetty.aggregate</groupId>
-                <artifactId>jetty-all</artifactId>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-server</artifactId>
                 <version>${jetty9.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-webapp</artifactId>
+                <version>${jetty9.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-jmx</artifactId>
+                <version>${jetty9.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty.websocket</groupId>
+                <artifactId>javax-websocket-server-impl</artifactId>
+                <version>${jetty9.version}</version>
+                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>

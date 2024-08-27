@@ -31,7 +31,6 @@ import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.link.Link;
-import org.apache.wicket.model.AbstractReadOnlyModel;
 
 /**
  * Created by calle on 19/04/16.
@@ -44,35 +43,33 @@ public class AppendableListViewPage extends WebPage
 	{
 		List<Integer> list = new ArrayList<>();
 		list.addAll(Arrays.asList(1, 2, 3, 4));
-		final AppendableListView<Integer> appendableListView = new AppendableListView<Integer>("repeater", list)
-		{
-			@Override
-			protected void populateItem(final AppendableListItem item)
-			{
-				item.add(new Label("index", item.getModelObject()));
-				item.add(new Label("timestamp", new AbstractReadOnlyModel<String>()
+		final AppendableListView<Integer> appendableListView =
+				new AppendableListView<Integer>("repeater", list)
 				{
 					@Override
-					public String getObject()
+					protected void populateItem(final AppendableListItem item)
 					{
-						return DateFormat.getTimeInstance(DateFormat.LONG).format(new Date());
+						item.add(new Label("index", item.getModelObject()));
+						item.add(new Label("timestamp",
+								() -> DateFormat.getTimeInstance(DateFormat.LONG)
+								                .format(new Date())));
 					}
-				}));
-			}
 
-			@Override
-			protected void onAppendItem(AppendableListItem newItem, AjaxRequestTarget ajax)
-			{
-				newItem.add(new AttributeAppender("style", "display:none;", ";") {
 					@Override
-					public boolean isTemporary(Component component)
+					protected void onAppendItem(AppendableListItem newItem, AjaxRequestTarget ajax)
 					{
-						return true;
+						newItem.add(new AttributeAppender("style", "display:none;", ";")
+						{
+							@Override
+							public boolean isTemporary(Component component)
+							{
+								return true;
+							}
+						});
+						ajax.appendJavaScript(
+								String.format("$('#%s').fadeIn();", newItem.getMarkupId()));
 					}
-				});
-				ajax.appendJavaScript(String.format("$('#%s').fadeIn();", newItem.getMarkupId()));
-			}
-		};
+				};
 		add(appendableListView);
 		add(new AjaxLink<Void>("append")
 		{
@@ -117,31 +114,26 @@ public class AppendableListViewPage extends WebPage
 					protected void populateItem(final AppendableListItem item)
 					{
 						item.add(new Label("index", item.getModelObject()));
-						item.add(new Label("timestamp", new AbstractReadOnlyModel<String>()
-						{
-							@Override
-							public String getObject()
-							{
-								return DateFormat.getTimeInstance(DateFormat.LONG)
-								                 .format(new Date());
-							}
-						}));
+						item.add(new Label("timestamp",
+								() -> DateFormat.getTimeInstance(DateFormat.LONG)
+								                .format(new Date())));
 					}
 
-			@Override
-			protected void onAppendItem(AppendableListItem newItem, AjaxRequestTarget ajax)
-			{
-				newItem.add(new AttributeAppender("style", "display:none;", ";")
-				{
 					@Override
-					public boolean isTemporary(Component component)
+					protected void onAppendItem(AppendableListItem newItem, AjaxRequestTarget ajax)
 					{
-						return true;
+						newItem.add(new AttributeAppender("style", "display:none;", ";")
+						{
+							@Override
+							public boolean isTemporary(Component component)
+							{
+								return true;
+							}
+						});
+						ajax.appendJavaScript(
+								String.format("$('#%s').fadeIn();", newItem.getMarkupId()));
 					}
-				});
-				ajax.appendJavaScript(String.format("$('#%s').fadeIn();", newItem.getMarkupId()));
-			}
-		};
+				};
 		container.add(appendableListViewEmpty);
 		add(new AjaxLink<Void>("appendEmptySingle")
 		{
