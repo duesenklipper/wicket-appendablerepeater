@@ -24,13 +24,13 @@
 
     <groupId>de.wicketbuch.extensions</groupId>
     <artifactId>appendablerepeater-parent</artifactId>
-    <version>1.6.0.wicket9-SNAPSHOT</version>
+    <version>1.6.0.wicket9.java17-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <parent>
         <groupId>de.duesenklipper.maven</groupId>
         <artifactId>duesenklipper-parent</artifactId>
-        <version>1.9.1.java11</version>
+        <version>1.9.1.java17</version>
     </parent>
 
     <name>appendablerepeater-parent</name>
