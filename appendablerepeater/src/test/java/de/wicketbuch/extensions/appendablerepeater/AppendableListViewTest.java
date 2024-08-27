@@ -16,11 +16,8 @@
  */
 package de.wicketbuch.extensions.appendablerepeater;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,12 +28,12 @@ import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.util.tester.WicketTester;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class AppendableListViewTest
+class AppendableListViewTest
 {
 	@Test
-	public void renders() throws Exception
+	void renders()
 	{
 		WicketTester tester = new WicketTester();
 		tester.startPage(new TestPage(3));
@@ -46,18 +43,21 @@ public class AppendableListViewTest
 	}
 
 	@Test
-	public void appends() throws Exception
+	void appends()
 	{
 		WicketTester tester = new WicketTester();
 		tester.startPage(new TestPage(3));
 		tester.clickLink("append", true);
 		String lastResponse = tester.getLastResponseAsString();
-		assertTrue("ajax response should contain new item", lastResponse.contains("<span wicket:id=\"label\">test_3</span>"));
-		assertFalse("ajax response should not contain old items", lastResponse.contains("test_1"));
+		assertThat(lastResponse)
+				.as("ajax response should contain new item")
+				.contains("<span wicket:id=\"label\">test_3</span>")
+				.as("ajax response should not contain old items")
+				.doesNotContain("test_1");
 	}
 
 	@Test
-	public void repaintsCompletelyForFirstItem() throws Exception
+	void repaintsCompletelyForFirstItem()
 	{
 		WicketTester tester = new WicketTester();
 		tester.startPage(new TestPage(0));
@@ -68,7 +68,7 @@ public class AppendableListViewTest
 	}
 
 	@Test
-	public void removesCorrectItem()
+	void removesCorrectItem()
 	{
 		final WicketTester tester = new WicketTester();
 		tester.startPage(new TestPage(3));
@@ -83,13 +83,14 @@ public class AppendableListViewTest
 	}
 
 	@Test
-	public void doesNothingWhenRemovingNonexistentItem()
+	void doesNothingWhenRemovingNonexistentItem()
 	{
 		final WicketTester tester = new WicketTester();
 		tester.startPage(new TestPage(3));
 		tester.clickLink("removeNonexisting", true);
-		assertThat(tester.getLastResponseAsString(), is(equalTo(
-				"<?xml version=\"1.0\" encoding=\"UTF-8\"?><ajax-response></ajax-response>")));
+		assertThat(tester.getLastResponseAsString())
+				.isEqualTo(
+						"<?xml version=\"1.0\" encoding=\"UTF-8\"?><ajax-response></ajax-response>");
 	}
 
 	public static class TestPage extends WebPage
@@ -105,14 +106,15 @@ public class AppendableListViewTest
 			}
 			WebMarkupContainer container = new WebMarkupContainer("container");
 			add(container);
-			final AppendableListView<Integer> underTest = new AppendableListView<Integer>("underTest", list)
-			{
-				@Override
-				protected void populateItem(AppendableListItem item)
-				{
-					item.add(new Label("label", "test_" + item.getModelObject()));
-				}
-			};
+			final AppendableListView<Integer> underTest =
+					new AppendableListView<>("underTest", list)
+					{
+						@Override
+						protected void populateItem(AppendableListItem item)
+						{
+							item.add(new Label("label", "test_" + item.getModelObject()));
+						}
+					};
 			container.add(underTest);
 			add(new AjaxLink<Void>("append")
 			{

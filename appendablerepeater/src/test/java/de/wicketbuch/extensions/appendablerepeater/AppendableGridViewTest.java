@@ -16,9 +16,7 @@
  */
 package de.wicketbuch.extensions.appendablerepeater;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,16 +38,16 @@ import org.apache.wicket.markup.repeater.data.IDataProvider;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.util.tester.WicketTester;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class AppendableGridViewTest
+class AppendableGridViewTest
 {
-	private Set<String> appendedRows = new HashSet<>();
-	private Set<String> appendedItems = new HashSet<>();
+	private final Set<String> appendedRows = new HashSet<>();
+	private final Set<String> appendedItems = new HashSet<>();
 	private boolean pageChangeCalled = false;
 
 	@Test
-	public void renders() throws Exception
+	void renders()
 	{
 		WicketTester tester = newTester();
 		tester.startPage(new TestPage(3));
@@ -59,21 +57,23 @@ public class AppendableGridViewTest
 	}
 
 	@Test
-	public void appendsInExistingRow() throws Exception
+	void appendsInExistingRow()
 	{
 		WicketTester tester = newTester();
 		tester.startPage(new TestPage(2));
 		tester.clickLink("append", true);
 		String lastResponse = tester.getLastResponseAsString();
-		assertTrue("ajax response should contain new item",
-				lastResponse.contains(
-						"<span wicket:id=\"label\" path=\"container_underTest_1_cols_4_label\">test_2</span>"));
-		assertFalse("ajax response should not contain old items",
-				lastResponse.contains("test_1"));
+		assertThat(lastResponse)
+				.as("ajax response should contain new item")
+				.contains(
+						"<span wicket:id=\"label\" path=\"container_underTest_1_cols_4_label\">test_2</span>"
+				)
+				.as("ajax response should not contain old items")
+				.doesNotContain("test_1");
 	}
 
 	@Test
-	public void repaintsCompletelyForFirstItem() throws Exception
+	void repaintsCompletelyForFirstItem()
 	{
 		WicketTester tester = newTester();
 		tester.startPage(new TestPage(0));
@@ -84,7 +84,7 @@ public class AppendableGridViewTest
 	}
 
 	@Test
-	public void appendsInNewRow() throws Exception
+	void appendsInNewRow()
 	{
 		WicketTester tester = newTester();
 		tester.startPage(new TestPage(3));
@@ -94,20 +94,22 @@ public class AppendableGridViewTest
 		tester.assertComponentOnAjaxResponse("container:underTest:5");
 		final String lastResponse = tester.getLastResponseAsString();
 		// must not contain the old row
-		assertFalse("ajax response should not contain old row",
-				lastResponse.contains("container_underTest_1"));
-		assertFalse("ajax response should not contain old items",
-				lastResponse.contains("test_1"));
-		assertTrue("ajax response should contain new item",
-				lastResponse.contains("test_3"));
-		assertTrue("onAppendRow should have been called for new row",
-				appendedRows.contains("5"));
-		assertTrue("onAppendItem should not be called for item when new row " +
-				"is created", appendedItems.isEmpty());
+		assertThat(lastResponse)
+				.as("ajax response should not contain old row")
+				.doesNotContain("container_underTest_1")
+				.as("ajax response should not contain old items")
+				.doesNotContain("test_1")
+				.as("ajax response should contain new item")
+				.contains("test_3")
+				.as("onAppendRow should have been called for new row")
+				.contains("5");
+		assertThat(appendedItems)
+				.as("onAppendItem should not be called for item when new row is created")
+				.isEmpty();
 	}
 
 	@Test
-	public void appendsAcrossOldAndNewRows() throws Exception
+	void appendsAcrossOldAndNewRows()
 	{
 		WicketTester tester = newTester();
 		tester.startPage(new TestPage(2));
@@ -117,30 +119,33 @@ public class AppendableGridViewTest
 		tester.assertComponentOnAjaxResponse("container:underTest:5");
 		final String lastResponse = tester.getLastResponseAsString();
 		// must not contain the old row
-		assertFalse("ajax response should not contain old row",
-				// using quotes because this path will be legitimately be
-				// contained in the path of the new item in the old row
-				lastResponse.contains("\"container_underTest_1\""));
-		assertFalse("ajax response should not contain old items",
-				lastResponse.contains("test_1"));
-		assertTrue("ajax response should contain new item 2",
-				lastResponse.contains("test_2"));
-		assertTrue("ajax response should contain new item 3",
-				lastResponse.contains("test_3"));
-		assertTrue("ajax response should contain new item 4",
-				lastResponse.contains("test_4"));
-		assertTrue("onAppendRow should have been called for new row",
-				appendedRows.contains("5"));
-		assertEquals("onAppendRow should only be called for new row", 1,
-				appendedRows.size());
-		assertTrue("onAppendItem should be called for new item in old row",
-				appendedItems.contains("2"));
-		assertEquals("onAppendItem should only be called for new item in old" +
-				" row", 1, appendedItems.size());
+		assertThat(lastResponse)
+				.as("ajax response should not contain old row")
+				.doesNotContain("\"container_underTest_1\"")
+				.as("ajax response should not contain old items")
+				.doesNotContain("test_1")
+				.as("ajax response should contain new item 2")
+				.contains("test_2")
+				.as("ajax response should contain new item 3")
+				.contains("test_3")
+				.as("ajax response should contain new item 4")
+				.contains("test_4");
+
+		assertThat(appendedRows)
+				.as("onAppendRow should have been called for new row")
+				.contains("5")
+				.as("onAppendRow should only be called for new row")
+				.hasSize(1);
+
+		assertThat(appendedItems)
+				.as("onAppendItem should be called for new item in old row")
+				.contains("2")
+				.as("onAppendItem should only be called for new item in old row")
+				.hasSize(1);
 	}
 
 	@Test
-	public void appendsOnPageAndSignalsOverflowToNextPage() throws Exception
+	void appendsOnPageAndSignalsOverflowToNextPage()
 	{
 		WicketTester tester = newTester();
 		tester.startPage(new TestPage(5));
@@ -148,26 +153,33 @@ public class AppendableGridViewTest
 		// other two should go to the next page
 		tester.clickLink("append3", true);
 		final String lastResponse = tester.getLastResponseAsString();
-		assertTrue("should contain last fitting item in response",
-				lastResponse.contains("test_5"));
-		assertFalse("should not contain overflowing items in response",
-				lastResponse.contains("test_6"));
-		assertTrue("should call onPageChanged", pageChangeCalled);
-		assertTrue("should call onAppendItem for new item on this page",
-				appendedItems.contains("5"));
-		assertEquals("should not call onAppendItem for any other item", 1,
-				appendedItems.size());
-		assertEquals("should not call onAppendRow at all", 0,
-				appendedRows.size());
-		final AppendableGridView<Integer> underTest =
+		assertThat(lastResponse)
+				.as("should contain last fitting item in response")
+				.contains("test_5")
+				.as("should not contain overflowing items in response").doesNotContain(
+						"test_6");
+		assertThat(pageChangeCalled).as("should call onPageChanged").isTrue();
+		assertThat(appendedItems)
+				.as("should call onAppendItem for new item on this page")
+				.contains("5")
+				.as("should not call onAppendItem for any other item")
+				.hasSize(1);
+
+		assertThat(appendedRows)
+				.as("should not call onAppendRow at all")
+				.isEmpty();
+
+		@SuppressWarnings("unchecked") final AppendableGridView<Integer> underTest =
 				(AppendableGridView<Integer>) tester.getComponentFromLastRenderedPage(
 						"container:underTest");
-		assertEquals("should stay on first page (index 0)", 0, underTest
-				.getCurrentPage());
+
+		assertThat(underTest.getCurrentPage())
+				.as("should stay on first page (index 0)")
+				.isZero();
 	}
 
 	@Test
-	public void jumpsToNewPageAsNeeded() throws Exception
+	void jumpsToNewPageAsNeeded()
 	{
 		WicketTester tester = newTester();
 		tester.startPage(new TestPage(7));
@@ -179,29 +191,31 @@ public class AppendableGridViewTest
 		// completely switch pages
 		tester.assertComponentOnAjaxResponse("container");
 		final String lastResponse = tester.getLastResponseAsString();
-		assertTrue("should contain already existing items on second page",
-				lastResponse.contains("test_6"));
-		assertTrue("should contain new items",
-				lastResponse.contains("test_7"));
-		assertTrue("should contain new items",
-				lastResponse.contains("test_8"));
-		assertTrue("should contain new items",
-				lastResponse.contains("test_9"));
-		assertFalse("should not contain items on previous page",
-				lastResponse.contains("test_2"));
-		assertTrue("should call onAppendItem for new items", appendedItems
-				.containsAll(Arrays.asList("7", "8", "9")));
-		assertEquals("should not call onAppendItem for existing items", 3,
-				appendedItems.size());
-		final AppendableGridView<Integer> underTest =
+		assertThat(lastResponse)
+				.as("should contain already existing items on second page")
+				.contains("test_6")
+				.as("should contain new items").contains("test_7")
+				.contains("test_8")
+				.contains("test_9")
+				.as("should not contain items on previous page")
+				.doesNotContain("test_2");
+
+		assertThat(appendedItems)
+				.as("should call onAppendItem for new items")
+				.containsAll(Arrays.asList("7", "8", "9"))
+				.as("should not call onAppendItem for existing items")
+				.hasSize(3);
+
+		@SuppressWarnings("unchecked") final AppendableGridView<Integer> underTest =
 				(AppendableGridView<Integer>) tester.getComponentFromLastRenderedPage(
 						"container:underTest");
-		assertEquals("should be on second page (index 1) now", 1, underTest
-				.getCurrentPage());
+
+		assertThat(underTest
+				.getCurrentPage()).as("should be on second page (index 1) now").isEqualTo(1);
 	}
 
 	@Test
-	public void itemIndexContinuesCorrectly() throws Exception
+	void itemIndexContinuesCorrectly()
 	{
 		final WicketTester tester = newTester();
 		tester.startPage(new TestPage(1));
@@ -211,8 +225,7 @@ public class AppendableGridViewTest
 	}
 
 	@Test
-	public void itemIndexContinuesCorrectly_Reuse_github_issue_1() throws
-			Exception
+	void itemIndexContinuesCorrectly_Reuse_github_issue_1()
 	{
 		// when reusing items, appending directly into a new row (no empty
 		// slots left in the last rendered row) after a non-ajax render
@@ -228,11 +241,11 @@ public class AppendableGridViewTest
 		// render without ajax
 		tester.clickLink("reload", false);
 		tester.assertContains
-				("index_0.*index_1.*index_2");
+				      ("index_0.*index_1.*index_2");
 		// append into the next row, should keep counting index up
 		tester.clickLink("append3", true);
 		tester.assertContains
-				("index_3.*index_4.*index_5");
+				      ("index_3.*index_4.*index_5");
 	}
 
 	private WicketTester newTester()
@@ -243,8 +256,10 @@ public class AppendableGridViewTest
 		return tester;
 	}
 
-	public class TestPage_Reuse extends TestPage {
-		public TestPage_Reuse(int initial) {
+	public class TestPage_Reuse extends TestPage
+	{
+		public TestPage_Reuse(int initial)
+		{
 			super(initial);
 			underTest.setItemReuseStrategy(
 					ReuseIfModelsEqualStrategy.getInstance());
@@ -268,7 +283,7 @@ public class AppendableGridViewTest
 			IDataProvider<Integer>
 					dataProvider = new ListDataProvider(list);
 			underTest = new
-					AppendableGridView<Integer>("underTest", dataProvider)
+					AppendableGridView<>("underTest", dataProvider)
 					{
 						@Override
 						protected void populateEmptyItem(Item<Integer> item)
@@ -331,7 +346,8 @@ public class AppendableGridViewTest
 					underTest.itemsAppended(ajax);
 				}
 			});
-			add(new Link<Void>("reload") {
+			add(new Link<Void>("reload")
+			{
 				@Override
 				public void onClick()
 				{
@@ -351,7 +367,7 @@ public class AppendableGridViewTest
 		}
 
 		@Override
-		public Iterator iterator(long first, long count)
+		public Iterator<Integer> iterator(long first, long count)
 		{
 			int toIndex = (int) (first + count);
 			if (toIndex < 0 || toIndex >= list.size())
@@ -370,15 +386,9 @@ public class AppendableGridViewTest
 		}
 
 		@Override
-		public IModel model(Integer object)
+		public IModel<Integer> model(Integer object)
 		{
 			return Model.of(object);
-		}
-
-		@Override
-		public void detach()
-		{
-
 		}
 	}
 }
