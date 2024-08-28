@@ -159,6 +159,7 @@
                         <exclude>.java-version</exclude>
                         <exclude>pom.xml.versionsBackup</exclude>
                         <exclude>**/keystore</exclude>
+                        <exclude>.sdkmanrc</exclude>
                     </excludes>
                     <failIfUnknown>true</failIfUnknown>
                 </configuration>
