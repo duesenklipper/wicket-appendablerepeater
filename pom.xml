@@ -24,7 +24,7 @@
 
     <groupId>de.wicketbuch.extensions</groupId>
     <artifactId>appendablerepeater-parent</artifactId>
-    <version>1.7.0.wicket10-SNAPSHOT</version>
+    <version>1.7.1.wicket10-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <parent>
