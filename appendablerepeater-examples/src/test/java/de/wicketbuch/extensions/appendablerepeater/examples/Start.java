@@ -28,11 +28,11 @@ import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.SslConnectionFactory;
+import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.util.resource.Resource;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.webapp.WebAppContext;
-import org.eclipse.jetty.websocket.jsr356.server.ServerContainer;
-import org.eclipse.jetty.websocket.jsr356.server.deploy.WebSocketServerContainerInitializer;
+import org.eclipse.jetty.websocket.jakarta.server.config.JakartaWebSocketServletContainerInitializer;
 
 /**
  * Separate startup class for people that want to run the examples directly. Use parameter
@@ -72,13 +72,15 @@ public class Start
 			// use this certificate anywhere important as the passwords are
 			// available in the source.
 
-			SslContextFactory sslContextFactory = new SslContextFactory.Server();
+			SslContextFactory.Server sslContextFactory = new SslContextFactory.Server();
 			sslContextFactory.setKeyStoreResource(keystore);
 			sslContextFactory.setKeyStorePassword("wicket");
 			sslContextFactory.setKeyManagerPassword("wicket");
 
 			HttpConfiguration https_config = new HttpConfiguration(http_config);
-			https_config.addCustomizer(new SecureRequestCustomizer());
+			SecureRequestCustomizer src = new SecureRequestCustomizer();
+			src.setSniHostCheck(false);
+			https_config.addCustomizer(src);
 
 			ServerConnector https = new ServerConnector(server, new SslConnectionFactory(
 					sslContextFactory, "http/1.1"), new HttpConnectionFactory(https_config));
@@ -97,10 +99,18 @@ public class Start
 		bb.setContextPath("/");
 		bb.setWar("src/main/webapp");
 
-		// bb.getSessionHandler().setSessionCache(sessionCache);
+		// uncomment the next two lines if you want to start Jetty with WebSocket (JSR-356) support
+		// you need org.apache.wicket:wicket-native-websocket-javax in the classpath!
+		// ServerContainer serverContainer = WebSocketServerContainerInitializer.configureContext(bb);
+		// serverContainer.addEndpoint(new WicketServerEndpointConfig());
 
-		ServerContainer serverContainer = WebSocketServerContainerInitializer.initialize(bb);
-		serverContainer.addEndpoint(new WicketServerEndpointConfig());
+//		bb.getSessionHandler().setSessionCache(sessionCache);
+
+		ServletContextHandler contextHandler =
+				ServletContextHandler.getServletContextHandler(bb.getServletContext());
+		JakartaWebSocketServletContainerInitializer.configure(contextHandler,
+				(servletContext, container) -> container.addEndpoint(
+						new WicketServerEndpointConfig()));
 		// uncomment next line if you want to test with JSESSIONID encoded in the urls
 		// ((AbstractSessionManager)
 		// bb.getSessionHandler().getSessionManager()).setUsingCookies(false);
@@ -116,8 +126,7 @@ public class Start
 		{
 			server.start();
 			server.join();
-		}
-		catch (Exception e)
+		} catch (Exception e)
 		{
 			e.printStackTrace();
 			System.exit(100);

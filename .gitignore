@@ -119,3 +119,11 @@ fabric.properties
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 # Created by .ignore support plugin (hsz.mobi)
+.idea/sonarlint
+.idea/aws.xml
+/.idea/compiler.xml
+/.idea/git_toolbox_blame.xml
+/.idea/git_toolbox_prj.xml
+/.idea/jarRepositories.xml
+/.idea/kotlinc.xml
+/.idea/misc.xml

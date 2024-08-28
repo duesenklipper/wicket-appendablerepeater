@@ -25,11 +25,11 @@
     <parent>
         <artifactId>appendablerepeater-parent</artifactId>
         <groupId>de.wicketbuch.extensions</groupId>
-        <version>1.6.2.wicket9.java17-SNAPSHOT</version>
+        <version>1.7.0.wicket10-SNAPSHOT</version>
     </parent>
     <artifactId>appendablerepeater-examples</artifactId>
     <packaging>war</packaging>
-    <version>1.6.2.wicket9.java17-SNAPSHOT</version>
+    <version>1.7.0.wicket10-SNAPSHOT</version>
     <name>appendablerepeater-examples</name>
 
     <licenses>
@@ -51,36 +51,49 @@
         <dependency>
             <groupId>org.apache.wicket</groupId>
             <artifactId>wicket-native-websocket-javax</artifactId>
+            <scope>test</scope>
         </dependency>
         <!--  JETTY DEPENDENCIES FOR TESTING  -->
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-server</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-webapp</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-jmx</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty.websocket</groupId>
-            <artifactId>javax-websocket-server-impl</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-util</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>javax.websocket</groupId>
-            <artifactId>javax.websocket-api</artifactId>
+            <groupId>org.eclipse.jetty.toolchain</groupId>
+            <artifactId>jetty-jakarta-websocket-api</artifactId>
+            <version>2.0.0</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-servlet</artifactId>
-            <version>${jetty9.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-util</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.jetty.toolchain</groupId>
+            <artifactId>jetty-jakarta-servlet-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-jmx</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.jetty.websocket</groupId>
+            <artifactId>websocket-jakarta-server</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -98,7 +111,7 @@
             <plugin>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-maven-plugin</artifactId>
-                <version>${jetty9.version}</version>
+                <version>${jetty.version}</version>
                 <configuration>
                     <systemProperties>
                         <systemProperty>

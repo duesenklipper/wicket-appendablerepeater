@@ -24,7 +24,7 @@
 
     <groupId>de.wicketbuch.extensions</groupId>
     <artifactId>appendablerepeater-parent</artifactId>
-    <version>1.6.2.wicket9.java17-SNAPSHOT</version>
+    <version>1.7.0.wicket10-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <parent>
@@ -56,9 +56,9 @@
         <slf4j.version>2.0.12</slf4j.version>
         <junit.version>5.10.2</junit.version>
         <clirr.compare.version>1.2.5.wicket7</clirr.compare.version>
-        <jetty9.version>9.4.54.v20240208</jetty9.version>
         <wtp.version>none</wtp.version>
-        <wicket.version>9.18.0</wicket.version>
+        <wicket.version>10.1.0</wicket.version>
+        <jetty.version>11.0.14</jetty.version>
     </properties>
 
     <modules>
@@ -101,41 +101,58 @@
                 <artifactId>wicket-native-websocket-javax</artifactId>
                 <version>${wicket.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.apache.wicket</groupId>
+                <artifactId>wicket-tester</artifactId>
+                <version>${wicket.version}</version>
+                <scope>test</scope>
+            </dependency>
             <!--  JETTY DEPENDENCIES FOR TESTING  -->
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-server</artifactId>
-                <version>${jetty9.version}</version>
+                <scope>test</scope>
+                <version>${jetty.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-webapp</artifactId>
-                <version>${jetty9.version}</version>
+                <scope>test</scope>
+                <version>${jetty.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-jmx</artifactId>
-                <version>${jetty9.version}</version>
+                <scope>test</scope>
+                <version>${jetty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-servlet</artifactId>
+                <version>${jetty.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-util</artifactId>
+                <scope>test</scope>
+                <version>${jetty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty.toolchain</groupId>
+                <artifactId>jetty-jakarta-servlet-api</artifactId>
+                <version>5.0.2</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jetty.websocket</groupId>
-                <artifactId>javax-websocket-server-impl</artifactId>
-                <version>${jetty9.version}</version>
+                <artifactId>websocket-jakarta-server</artifactId>
+                <scope>test</scope>
+                <version>${jetty.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-simple</artifactId>
                 <version>${slf4j.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.jetty</groupId>
-                <artifactId>jetty-util</artifactId>
-                <version>${jetty9.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>javax.websocket</groupId>
-                <artifactId>javax.websocket-api</artifactId>
-                <version>1.0</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
